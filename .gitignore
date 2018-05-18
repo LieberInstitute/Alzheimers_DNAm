@@ -4,6 +4,7 @@
 *_tmp
 *.csv
 *.rda
+*.xlsx
 
 ## Ignore hidden bash files
 .*.sh

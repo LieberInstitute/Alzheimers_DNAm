@@ -1,4 +1,4 @@
-#qsub -l bluejay,mf=30G,h_vmem=40G,h_fsize=200G,h_stack=256M -cwd -b y -M stephensemick@gmail.com -o log -e log R CMD BATCH --no-save 01h_pca.R
+#qsub -l bluejay,mf=30G,h_vmem=40G,h_fsize=200G,h_stack=256M -cwd -b y -M stephensemick@gmail.com -o log -e log R CMD BATCH --no-save 01d_pca.R
 
 ##PCA
 library(ggplot2)
@@ -12,7 +12,7 @@ theme_set(theme_bw(base_size=30) +
 				 plot.title = element_text(hjust = 0.5),
 				 legend.position="none"))
 ##
-load('/dcl01/lieber/ajaffe/Steve/Alz/rdas/cleanSamples_n380_processed_data_postfiltered.rda')
+load('rdas/processed_data_postfiltered.rda')
 
 #### Modeling methylation changes
 library(limma)
@@ -35,11 +35,20 @@ bVals <- bVals[-drop_hg38_unmappable, ]
 pca <- prcomp(t(bVals))
 varExplained=jaffelab::getPcaVars(pca)
 pca=pca$x
-save(pd,pca,varExplained, file='/dcl01/lieber/ajaffe/Steve/Alz/rdas/pca_alz.rda')
+save(pd,pca,varExplained, file='rdas/pca_alz.rda')
 
 #
 colnames(pca) <- paste0("meth",colnames(pca) )
 
+
+keep_list = read.csv('/dcl01/lieber/ajaffe/Steve/Alz/keep_list.csv')
+keep_list[!is.na(keep_list)] <- paste0("Br", as.character(as.numeric(keep_list[!is.na(keep_list)] )))
+
+pd$keepList = ifelse(pd$Dx=="Control",NA,FALSE)
+pd[pd$Region=="CRB" & pd$BrNum%in%keep_list$CB,'keepList' ] <- TRUE
+pd[pd$Region=="DLPFC" & pd$BrNum%in%keep_list$DLPFC,'keepList' ] <- TRUE
+pd[pd$Region=="ERC" & pd$BrNum%in%keep_list$ERC,'keepList' ] <- TRUE
+pd[pd$Region=="HIPPO" & pd$BrNum%in%keep_list$Hippo,'keepList' ] <- TRUE
 
 
 dat = cbind(pd,pca[,1:10] )
@@ -50,11 +59,8 @@ dat$DxOrdinal = as.character(dat$Dx)
 dat[!dat$keepList,'DxOrdinal'] <- 'Alz Drop'
 dat[dat$DxOrdinal=="Alzheimer",'DxOrdinal'] <- 'Alz Keep'
 
-dat$region_stage=NA
-dat$region_stage[!is.na(dat$ageStage)] <- paste0(dat$ageStage[!is.na(dat$ageStage)],"_", dat$Brain.Region[!is.na(dat$ageStage)])
-dat$region_stage = factor(dat$region_stage)
-dat$region_stage <- factor(dat$region_stage, levels=c('Fetal_Hippo','Fetal_DLPFC','Adult_Hippo','Adult_DLPFC') )
-dat$region_stage <- plyr::revalue(dat$region_stage, c('Fetal_Hippo'='Prenatal_Hippo', 'Fetal_DLPFC'='Prenatal_DLPFC') )
+#> dat[dat$methPC1>0&dat$Region=="CRB",'BrNum']
+#[1] "Br1909" "Br1615" "Br2257"
 
 PC1_2 <- ggplot(data=dat[dat$DxOrdinal!="Alz Drop",] ,aes(x=methPC1, y=methPC2, col=Region) ) +
 	 geom_point(size=5)+ 
@@ -65,7 +71,19 @@ PC1_2 <- ggplot(data=dat[dat$DxOrdinal!="Alz Drop",] ,aes(x=methPC1, y=methPC2, 
 		legend.title=element_blank(),
 		legend.key = element_rect(size = 5),
         legend.key.size = unit(1.5, 'lines') )+ scale_colour_brewer(palette="Dark2")
-ggsave(PC1_2, file='/dcl01/lieber/ajaffe/Steve/Alz/plots/alz_brainRegion_pca.pdf',height=8,width=12 )
+ggsave(PC1_2, file='qc/SupplementalFigure_alz_brainRegion_pca.pdf',height=8,width=12,useDingbats=FALSE )
+
+PC1_2 <- ggplot(data=dat[dat$DxOrdinal!="Alz Drop",] ,aes(x=methPC1, y=methPC2, col=Region) ) +
+	 geom_boxplot(size=5)+ 
+	 labs(x=paste0("PC1 \n(",signif(varExplained[1],3) ,"% of variance)"),
+		  y=paste0("PC2 \n(",signif(varExplained[2],3) ,"% of variance)")) +
+  theme(legend.position = c(.10,.15), 
+		legend.background = element_rect(colour = "black"),
+		legend.title=element_blank(),
+		legend.key = element_rect(size = 5),
+        legend.key.size = unit(1.5, 'lines') )+ scale_colour_brewer(palette="Dark2")
+ggsave(PC1_2, file='qc/SupplementalFigure_alz_brainRegion_pca.pdf',height=8,width=12,useDingbats=FALSE )
+
 
 PC2_3 <- ggplot(data=dat ,aes(x=methPC2, y=methPC3, col=Dx) ) +
 	 geom_point(size=5)+ 

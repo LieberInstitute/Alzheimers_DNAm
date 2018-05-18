@@ -1,14 +1,14 @@
 #
 library(minfi)
-setwd('/dcl01/lieber/ajaffe/Steve/Alz/')
+setwd('/dcl01/lieber/ajaffe/Steve/Alz/Paper')
 ##
-load('/dcl01/lieber/ajaffe/Steve/Alz/rdas/MSet_SQN_postfiltered.rda')
-load('/dcl01/lieber/ajaffe/Steve/Alz/rdas/processed_data_postfiltered.rda')
+load('rdas/MSet_SQN_postfiltered.rda')
+load('rdas/processed_data_postfiltered.rda')
 
 ##
-dropList1=openxlsx::read.xlsx('/dcl01/lieber/ajaffe/Steve/Alz/qc/n398_meth450k_genotype_problematic_samples.xlsx',sheet=1)
+dropList1=openxlsx::read.xlsx('qc/n398_meth450k_genotype_problematic_samples.xlsx',sheet=1)
 dropList1$Decision='Drop'
-dropList2=openxlsx::read.xlsx('/dcl01/lieber/ajaffe/Steve/Alz/qc/n398_meth450k_genotype_problematic_samples.xlsx',sheet=2)
+dropList2=openxlsx::read.xlsx('qc/n398_meth450k_genotype_problematic_samples.xlsx',sheet=2)
 
 ## Drop samples which matched the wrong genotype
 dropList1 = dropList1[dropList1$Decision=="Drop",'MethSampleName' ]
@@ -38,7 +38,16 @@ dim(pd) #380
 ## Check
 table(pd$Region,pd$Dx)
 
-#length(keep_genotyped)
+## Drop cerebellum outliers
+dropId3 = which(pd$Region=="CRB" & pd$BrNum%in%c("Br1909","Br1615","Br2257"))
+ 
+pd = pd[-dropId3,]
+bVals = bVals[,-dropId3]
+mVals = mVals[,-dropId3]
+Mset_SQN = Mset_SQN[, -dropId3]
+
+dim(pd) #377
+
 ### Check colnames
 all(pd$Sample_Name ==colnames(bVals))
 all(pd$Sample_Name==colnames(mVals))
@@ -58,6 +67,13 @@ all_regions = table(pd$BrNum)==4
 all_regions=names(all_regions)[all_regions]
 pd$allRegions = pd$BrNum %in% all_regions
 
+pd$Dx = factor(pd$Dx, levels=c("Control","Alzheimer") )
+pd$Region = factor(pd$Region, levels=c("CRB","DLPFC","HIPPO","ERC") )
+pd$keepList[is.na(pd$keepList)] = TRUE
+pd$DxOrdinal = as.character(pd$Dx)
+pd[!pd$keepList,'DxOrdinal'] <- 'Alz Drop'
+pd[pd$DxOrdinal=="Alzheimer",'DxOrdinal'] <- 'Alz Keep'
+
 ### Save out final sample set used for meQTL analysis
-save(pd,bVals,mVals,file='/dcl01/lieber/ajaffe/Steve/Alz/rdas/cleanSamples_n380_processed_data_postfiltered.rda')
-save(pd,Mset_SQN,file='/dcl01/lieber/ajaffe/Steve/Alz/rdas/cleanSamples_n380_Mset_SQN_postfiltered.rda')
+save(pd,bVals,mVals,file='rdas/cleanSamples_n377_processed_data_postfiltered.rda')
+save(pd,Mset_SQN,file='rdas/cleanSamples_n377_Mset_SQN_postfiltered.rda')

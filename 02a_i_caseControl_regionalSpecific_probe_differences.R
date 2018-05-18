@@ -1,7 +1,7 @@
 #### Modeling methylation changes
 library(minfi)
 library(limma)
-load('/dcl01/lieber/ajaffe/Steve/Alz/rdas/cleanSamples_n380_processed_data_postfiltered.rda')
+load('rdas/cleanSamples_n377_processed_data_postfiltered.rda')
 ###
 library(IlluminaHumanMethylation450kanno.ilmn12.hg19)
 ann450k = getAnnotation(IlluminaHumanMethylation450kanno.ilmn12.hg19)
@@ -20,12 +20,6 @@ goldsetSub <- goldset[match(rownames(bVals),goldset$Name), ]
 goldsetSub = plyr::rename(goldsetSub, c('predictedPos'='pos_hg38','pos'='pos_hg19','chr'='chr_hg19') )
 goldsetSub = goldsetSub[,c('chr_hg19','pos_hg19','chr_hg38','pos_hg38', intersect(colnames(goldsetSub), colnames(ann450kSub)) )]		
 			  
-pd$Dx = factor(pd$Dx, levels=c("Control","Alzheimer") )
-pd$Region = factor(pd$Region, levels=c("CRB","DLPFC","HIPPO","ERC") )
-pd$keepList[is.na(pd$keepList)] = TRUE
-pd$DxOrdinal = as.character(pd$Dx)
-pd[!pd$keepList,'DxOrdinal'] <- 'Alz Drop'
-pd[pd$DxOrdinal=="Alzheimer",'DxOrdinal'] <- 'Alz Keep'
 pd$DxOrdinal= as.numeric(factor(pd$DxOrdinal, levels=c("Control", "Alz Drop", "Alz Keep") ))
 			  
 
@@ -219,49 +213,4 @@ se = mapply(function(x,y) { (y-x) / (qnorm(.975, mean = 0, sd = 1, log = FALSE) 
 colnames(se) <- gsub("CI.L","SE",colnames( se) )
 regionSpecific_mergedStats= cbind(regionSpecific_mergedStats, se)
 
-
-save(regionSpecific_mergedStats, file='/dcl01/lieber/ajaffe/Steve/Alz/rdas/merged_DMP_regionSpecific_caseControl_stats.rda')	
-
-#tests = grep("adj.P.Val", colnames(mergedStats),value=TRUE )
-#table(rowSums(mergedStats[,tests] <0.10)>0)
-#write.csv(mergedStats[rowSums(mergedStats[,tests] <0.05)>0,],file='/dcl01/lieber/ajaffe/Steve/Alz/csvs/merged_DMC_case_control_stats_FDR10.csv',row.names=FALSE)	
-#write.csv(mergedStats[rowSums(mergedStats[,tests] <0.05)>0,],file=gzfile('/dcl01/lieber/ajaffe/Steve/Alz/csvs/merged_DMC_case_control_stats_FDR10.csv.gz'),row.names=FALSE)	
-
-
-####### Full within region analysis ######
-#
-#####---DLPFC---####
-#regionIndex=which(pd$Region=="DLPFC")
-#mod <- model.matrix(~Dx+ negControl_PC1 + negControl_PC2 + Age+Sex + snpPC1, data = pd[regionIndex,])
-#fit <- lmFit(bVals[,regionIndex], mod)
-#fitEb <- eBayes(fit)
-#fullStats_DLPFC <- topTable(fitEb, num=Inf, coef=2, genelist=goldsetSub)
-#table(fullStats_DLPFC$adj.P.Val<0.10)
-#colnames(fullStats_DLPFC)[25:30] <- paste0("DLPFC_full_",colnames(fullStats_DLPFC)[25:30])
-#
-#####---Hippo---####
-#regionIndex=which(pd$Region=="HIPPO")
-#mod <- model.matrix(~Dx+ negControl_PC1 + negControl_PC2 + Age+Sex + snpPC1, data = pd[regionIndex,])
-#fit <- lmFit(bVals[,regionIndex], mod)
-#fitEb <- eBayes(fit)
-#fullStats_HIPPO <- topTable(fitEb, num=Inf, coef=2)
-#table(fullStats_HIPPO$adj.P.Val<0.10)
-#colnames(fullStats_HIPPO) <- paste0("HIPPO_full_",colnames(fullStats_HIPPO))
-#
-#####---ERC---####
-#regionIndex=which(pd$Region=="ERC")
-#mod <- model.matrix(~Dx+ negControl_PC1 + negControl_PC2 + Age+Sex + snpPC1, data = pd[regionIndex,])
-#fit <- lmFit(bVals[,regionIndex], mod)
-#fitEb <- eBayes(fit)
-#fullStats_ERC <- topTable(fitEb, num=Inf, coef=2)
-#table(fullStats_ERC$adj.P.Val<0.10)
-#colnames(fullStats_ERC) <- paste0("ERC_full_",colnames(fullStats_ERC))
-#
-#####---CRB---####
-#regionIndex=which(pd$Region=="CRB")
-#mod <- model.matrix(~Dx+ negControl_PC1 + negControl_PC2 + Age+Sex + snpPC1, data = pd[regionIndex,])
-#fit <- lmFit(bVals[,regionIndex], mod)
-#fitEb <- eBayes(fit)
-#fullStats_CRB <- topTable(fitEb, num=Inf, coef=2)
-#table(fullStats_CRB$adj.P.Val<0.10)
-#colnames(fullStats_CRB) <- paste0("CRB_full_",colnames(fullStats_CRB))
+save(regionSpecific_mergedStats, file='rdas/merged_DMP_regionSpecific_caseControl_stats.rda')	

@@ -1,6 +1,6 @@
-#qsub -l mf=20G,h_vmem=60G,h_stack=256M -cwd -b y -M stephensemick@gmail.com -o log -e log R CMD BATCH --no-save 01e_horvath_epigenetic_clock.R
+#qsub -l mf=20G,h_vmem=60G,h_stack=256M -cwd -b y -M stephensemick@gmail.com -o log -e log R CMD BATCH --no-save 01h_horvath_epigenetic_clock.R
 
-setwd("/dcl01/lieber/ajaffe/Steve/Alz")
+setwd("/dcl01/lieber/ajaffe/Steve/Alz/Paper")
 # Copy and pase the following R software code
 # Use forward slashes /”, as R will misread filepaths with backslashes
 library(minfi)
@@ -28,7 +28,7 @@ probeAnnotation21kdatMethUsed=read.csv("/dcl01/lieber/ajaffe/Steve/Aging/Hippo/e
 #Read in the DNA methylation data (beta values)
 # For a small file, e.g. measured on the 27k platform you could just use read.csv. 
 # But for large files, e.g. those measured on the 450K platform, I recommend you use read.csv.sql.
-load('/dcl01/lieber/ajaffe/Steve/Alz/rdas/RGset_n398.rda') #loading this is for using RGset
+load('rdas/RGset_n398.rda') #loading this is for using RGset
 Mset_Raw <- preprocessRaw(RGset)
 ratioSet <- ratioConvert(Mset_Raw, what = "beta", keepCN = FALSE)
 
@@ -106,6 +106,6 @@ dat0UsedNormalized=data.frame(CpGName=colnames(datMethUsedNormalized), data.fram
 #Here are the first few rows and columnsdato
 dat0UsedNormalized[1:5,1:5]
 #Output the data to your directory
-write.csv(dat0UsedNormalized,file="/dcl01/lieber/ajaffe/Steve/Alz/csvs/HorvathClock_dat0UsedNormalized.csv",row.names=F)
+write.csv(dat0UsedNormalized,file="csvs/HorvathClock_dat0UsedNormalized.csv",row.names=F)
 datout$SampleID = pd$Chip
-save(datout,pd,file='/dcl01/lieber/ajaffe/Steve/Alz/rdas/horvath_epigenetic_clock_output.rda')
+save(datout,pd,file='rdas/horvath_epigenetic_clock_output.rda')

@@ -10,8 +10,8 @@ theme_set(theme_bw(base_size=18) +
 				 plot.title = element_text(hjust = 0.5),
 				 legend.position="none"))
 ###
-setwd('/dcl01/lieber/ajaffe/Steve/Alz/')
-load('/dcl01/lieber/ajaffe/Steve/Alz/rdas/RGset_n398.rda')
+#setwd('/dcl01/lieber/ajaffe/Steve/Alz/Paper')
+load('rdas/RGset_n398.rda')
 
 #Fix pd brain number
 pd$BrNum[!is.na(pd$BrNum)]= paste0("Br", as.character(as.numeric(gsub("Br", "", pd$BrNum[!is.na(pd$BrNum)]) )) )
@@ -104,14 +104,14 @@ predictedSex_plot <- predictedSex_plot + geom_point(aes(colour = predictedSex) )
 	 scale_colour_brewer(palette = "Set1") +
 		scale_fill_brewer(palette = "Set1") +
 				theme(legend.position="bottom")
-ggsave(predictedSex_plot,filename='qc/PredictedSex_by_MethylationIntensity.pdf') 
+ggsave(predictedSex_plot,filename='qc/SupplementalFigure_PredictedSex_by_MethylationIntensity.pdf') 
 
 #### flag samples
 pd$flagSample = cut(pd$mMed +pd$uMed, c(10,21,23,30))
 levels(pd$flagSample) = c("LowQual", "CheckQual", "HighQual")
 
 
-pdf("qc/medianIntensityPlot_gsk_n398.pdf")
+pdf("qc/SupplementalFigure_medianIntensityPlot_gsk_n398.pdf")
 library(RColorBrewer)
 palette(brewer.pal(8,"Paired"))
 plot(pd$mMed, pd$uMed, pch=21, bg=as.numeric(factor(sn)),
@@ -150,7 +150,7 @@ save(Mset, pd, file = 'rdas/MsetRaw_prefiltered_n394.rda')
 save(RGset, pd, file = 'rdas/RGset_prefiltered_n394.rda')
 
 ################ visualise what the data looks like before and after normalisation
-pdf('qc/beta_distribution_pre_post_SQN.pdf')
+pdf('qc/SupplementalFigure_beta_distribution_pre_post_SQN.pdf')
 par(mfrow=c(1,2))
 #density plot for raw data
 densityPlot(RGset, main="Raw", legend=FALSE)
@@ -221,16 +221,6 @@ densityPlot(bVals, main="Beta values",
 densityPlot(mVals, main="M-values", 
             legend=FALSE, xlab="M-values")
 dev.off()
-
-######################
-#More EDA via PCA Exploration
-oo = order(matrixStats::rowSds(bVals),decreasing=TRUE)[1:100000]
-pca = prcomp(t(bVals[oo,]))
-save(pca, file = 'rdas/pca_100k_no_probe_filter.rda')
-pcaVars = getPcaVars(pca)
-
-PCs = pca$x[,1:15]
-pd = cbind(as.data.frame(pd), PCs, pcaVars ) 
 
 #################################
 #Saving things out for meQTL analysis

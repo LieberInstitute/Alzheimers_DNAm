@@ -33,11 +33,12 @@ snpsGeno[snpsGeno == "1/1"] = 2
 class(snpsGeno) = "numeric"
 
 ############ methylation called genotypes ##########
-setwd('/dcl01/lieber/ajaffe/Steve/Alz/')
-load('/dcl01/lieber/ajaffe/Steve/Alz/rdas/RGset_n398.rda')
+setwd('/dcl01/lieber/ajaffe/Steve/Alz/Paper')
+load('rdas/RGset_n398.rda')
 pd$BrNum[!is.na(pd$BrNum)]= paste0("Br", as.character(as.numeric(gsub("Br", "", pd$BrNum[!is.na(pd$BrNum)]) )) )
 pd$Chip = paste0(pd$Sentrix_ID,"_",pd$Sentrix_Position)
 #Change Hippocampus to Hippo
+sampleNames(RGset) <- pd$Chip
 snps <- getSnpBeta(RGset)
 colnames(snps) = paste0(pd[match(colnames(snps),pd$Chip),'BrNum'],"_",pd[match(colnames(snps),pd$Chip),'Sample_Name'])
 snps = snps[ ,!is.na(colnames(snps))]
@@ -170,12 +171,12 @@ length(unique(l))
 unique(l)
 snpMismatchWithin =  snpCorWithin[rownames(snpCorWithin)%in% unique(c(sapply(unique(l),colnames))),colnames(snpCorWithin)%in%unique(c(sapply(unique(l),colnames)))]
 
-pdf("qc/pheatmap_snpMismatchWithin_methylation_55SNP.pdf",h=15,w=15,onefile=FALSE)
+pdf("qc/SupplementalFigure_pheatmap_snpMismatchWithin_methylation_55SNP.pdf",h=15,w=15,onefile=FALSE,useDingbats=FALSE)
 pheatmap(snpMismatchWithin, 
 		cluster_rows=T, 
 		cluster_cols=T,
 		color=col.pal,
-		fontsize=14)
+		fontsize=30)
 dev.off()
 
 

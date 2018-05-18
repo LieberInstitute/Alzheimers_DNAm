@@ -45,4 +45,4 @@ pd = pd[pd$BrNum %in% pheno3$BrNum,]
 #### read in the data
 RGset = read.metharray(pd$basePath)
 pData(RGset) <- DataFrame(pd)
-save(RGset, pd, file='/dcl01/lieber/ajaffe/Steve/Alz/rdas/RGset_n398.rda')
+save(RGset, pd, file='rdas/RGset_n398.rda')

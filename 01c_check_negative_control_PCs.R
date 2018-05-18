@@ -1,7 +1,7 @@
 #qsub -l bluejay -l mf=10G,h_vmem=20G,h_stack=256M -cwd -b y -M stephensemick@gmail.com -o log -e log R CMD BATCH 02_check_negative_control_PCs.R
-# Analysis of Negative Control PCs: Hippocampus
-setwd('/dcl01/lieber/ajaffe/Steve/Alz/')
-load('/dcl01/lieber/ajaffe/Steve/Alz/rdas/RGset_n398.rda')
+# Analysis of Negative Control PCs
+setwd('/dcl01/lieber/ajaffe/Steve/Alz/Paper')
+load('rdas/RGset_n398.rda')
 
 library(ggplot2)
 library(ggrepel)
@@ -17,7 +17,6 @@ theme_set(theme_bw(base_size=18) +
 sampleNames(RGset) <- pd$Sample_Name
 #Fix pd brain number
 pd$BrNum[!is.na(pd$BrNum)]= paste0("Br", as.character(as.numeric(gsub("Br", "", pd$BrNum[!is.na(pd$BrNum)]) )) )
-#Change Hippocampus to Hippo
 pd$Sample_Plate<-pd$Sample_Group
 #############
 # PCA of negative control PCs
@@ -63,7 +62,7 @@ library(grid)
 lay <- rbind(c(1,2,2),
              c(3,4,4) )			   
 top4_negControl_PCs <- arrangeGrob(a, b, c,d, ncol=2,nrow=2, layout_matrix = lay) #generates g
-ggsave(top4_negControl_PCs, file="qc/top4_negControl_PCs.pdf", height=8.5,width=11) 	 
+ggsave(top4_negControl_PCs, file="qc/SupplementalFigure_top4_negControl_PCs.pdf", height=8.5,width=11,  useDingbats=FALSE) 	 
 #########
 pd$Sentrix_Pos_RN <- gsub("C.*","",pd$Sentrix_Position)
 
@@ -97,7 +96,7 @@ h <- ggplot(data=pd, aes(x=Sentrix_Pos_RN, y=negControl_PC2, fill=Sample_Plate) 
 		scale_fill_brewer(palette = "Set3") + 
 		labs(y="NegControl PC2") + 
 		theme(axis.text.x = element_text(angle = 90, hjust = .95, vjust=0.3, size = 8), axis.title.x=element_blank() )
-ggsave(h, file="qc/Plate_by_Position_RN_PC2.pdf", height=8.5,width=11) ###
+ggsave(h, file="qc/Plate_by_Position_RN_PC2.pdf", height=8.5,width=11 , useDingbats=FALSE) ###
 
 ########################## PCs across first Four
 PC1_2 <- ggplot(data=pd, aes(x=negControl_PC1, y=negControl_PC2, col=Sample_Plate) ) +
@@ -124,4 +123,3 @@ negControlPC_scatter <- arrangeGrob(PC1_2, PC2_3, PC3_4,PC_Scree, ncol=2,nrow=2)
 
 #generates g
 ggsave(negControlPC_scatter, file="qc/negControlPC_scatter.pdf", height=8.5,width=11)				 
-				 

@@ -1,0 +1,13 @@
+## Ignore large files
+*.bw
+*.wig
+*_tmp
+*.csv
+*.rda
+
+## Ignore hidden bash files
+.*.sh
+
+## Ignore log files
+logs
+.Rproj.user

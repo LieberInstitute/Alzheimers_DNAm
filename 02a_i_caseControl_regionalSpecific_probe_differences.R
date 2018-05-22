@@ -1,15 +1,12 @@
 #### Modeling methylation changes
 library(minfi)
 library(limma)
+
+setwd('/dcl01/lieber/ajaffe/Steve/Alz/Paper')
 load('rdas/cleanSamples_n377_processed_data_postfiltered.rda')
-###
-library(IlluminaHumanMethylation450kanno.ilmn12.hg19)
-ann450k = getAnnotation(IlluminaHumanMethylation450kanno.ilmn12.hg19)
-ann450kSub <- ann450k[match(rownames(bVals),ann450k$Name),
-                      c(1:4,12:19,24:ncol(ann450k))]
 
 ### drop probes that do not map to hg38
-load('/dcl01/lieber/ajaffe/Steve/meth450k_annotation_hg38/hg38_out/rdas/hg38_goldset_annotation.rda') #load hg38 position annotation
+load('/dcl01/lieber/ajaffe/Steve/meth450k_annotation_hg38/hg38_out/rdas/goldset_GencodeAnnotation_subset.rda') #load hg38 position annotation
 drop_hg38_unmappable = which(!rownames(bVals) %in% goldset$Name)
 #7966
 length(drop_hg38_unmappable) 
@@ -17,11 +14,11 @@ length(drop_hg38_unmappable)
 ###
 bVals <- bVals[-drop_hg38_unmappable, ] 					  
 goldsetSub <- goldset[match(rownames(bVals),goldset$Name), ]					  
-goldsetSub = plyr::rename(goldsetSub, c('predictedPos'='pos_hg38','pos'='pos_hg19','chr'='chr_hg19') )
-goldsetSub = goldsetSub[,c('chr_hg19','pos_hg19','chr_hg38','pos_hg38', intersect(colnames(goldsetSub), colnames(ann450kSub)) )]		
 			  
 pd$DxOrdinal= as.numeric(factor(pd$DxOrdinal, levels=c("Control", "Alz Drop", "Alz Keep") ))
-			  
+
+###### All region analysis: Main models ######
+
 
 ###### Keep within region analysis ######
 
@@ -32,7 +29,7 @@ fit <- lmFit(bVals[,regionIndex], mod)
 fitEb <- eBayes(fit)
 subStats_DLPFC <- topTable(fitEb, num=Inf, coef=2,genelist=goldsetSub, confint=TRUE)
 table(subStats_DLPFC$adj.P.Val<0.10)
-colnames(subStats_DLPFC)[25:30] <- paste0("DLPFC_subset_NoAdj_",colnames(subStats_DLPFC)[25:30])
+colnames(subStats_DLPFC)[40:45] <- paste0("DLPFC_subset_NoAdj_",colnames(subStats_DLPFC)[40:45])
 
 ####---Hippo---####
 regionIndex=which(pd$Region=="HIPPO" & pd$keepList )
@@ -196,7 +193,7 @@ cbind(subStats_DLPFC[baseRownames, ],
 	  ordStats_CRB_adj[baseRownames, ])
 	  
 ### Reorder columns
-col_order = c(colnames(regionSpecific_mergedStats)[1:24], 
+col_order = c(colnames(regionSpecific_mergedStats)[1:39], 
 			grep("_adj.P.Val",colnames(regionSpecific_mergedStats),value=T),	  
 			grep("_logFC",colnames(regionSpecific_mergedStats),value=T),
 			grep("_P.Value",colnames(regionSpecific_mergedStats),value=T),

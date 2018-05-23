@@ -28,9 +28,9 @@ corfit <- duplicateCorrelation(bVals[, subsetIndex], mod, block=pd$BrNum[subsetI
 fit <- lmFit(bVals[, subsetIndex], mod, block=pd$BrNum[subsetIndex], correlation = corfit$consensus.correlation)
 
 fitEb <- eBayes(fit)
-subset_ALL_mainEffect <- topTable(fitEb, num=Inf, coef=2, genelist=goldsetSub)
+subset_ALL_mainEffect <- topTable(fitEb, num=Inf, coef=2, genelist=goldsetSub, confint=TRUE)
 table(subset_ALL_mainEffect$adj.P.Val<0.05)
-colnames(subset_ALL_mainEffect)[40:45] <- paste0("ALL_subset_mainEffect_",colnames(subset_ALL_mainEffect)[40:45])
+colnames(subset_ALL_mainEffect)[40:47] <- paste0("ALL_subset_mainEffect_",colnames(subset_ALL_mainEffect)[40:47])
 
 ## Interaction effect
 mod <- model.matrix(~Dx+ APOE4_Dosage+negControl_PC1 + negControl_PC2 + Age+Sex + snpPC1 + Region + Dx:Region, data = pd[subsetIndex,])

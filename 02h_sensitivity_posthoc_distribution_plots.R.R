@@ -93,11 +93,39 @@ lines(x = c(-8,8), y = c(-8,8),col="red")
 dev.off()
 
 table(primary=primaryStats[,'ALL_subset_mainEffect_adj.P.Val']<0.05, 
-	 ordinal=APOE_allRegionStats[rownames(primaryStats),"ALL_subset_mainEffect_adj.P.Val"]<0.05)
+	 ordinal=APOE_allRegionStats[rownames(primaryStats),"ALL_subset_mainEffect_P.Value"]<0.01)
 
 
+fisher.test(table(primary=primaryStats[,'ALL_subset_mainEffect_adj.P.Val']<0.05, 
+	 ordinal=APOE_allRegionStats[rownames(primaryStats),"ALL_subset_mainEffect_adj.P.Val"]<0.05))
 
+############ Posthoc effects size plots
+library(RColorBrewer)
+library(pheatmap)
+col.pal = brewer.pal(9,"Blues")
+setwd('/dcl01/lieber/ajaffe/Steve/Alz/Paper')
+load('rdas/allRegion_mergedStats_DMP_analysis_dupCor.rda',verbose=T)
+load('rdas/merged_DMP_regionSpecific_caseControl_stats.rda',verbose=T)
+###
+library(ggplot2)
+theme_set(theme_bw(base_size=14) + 
+		  theme(panel.grid.major = element_blank(),
+				panel.grid.minor = element_blank(),
+				 plot.title = element_text(hjust = 0.5),
+				 legend.position="none"))
+##Interaction
+dat = regionSpecific_mergedStats[allRegion_mergedStats[allRegion_mergedStats$ALL_subset_interactionEffect_adj.P.Val<0.05,'Name'],c('CRB_subset_NoAdj_logFC','DLPFC_subset_NoAdj_logFC','HIPPO_subset_NoAdj_logFC','ERC_subset_NoAdj_logFC') ]
+colnames(dat) <- jaffelab::ss(colnames(dat),"_",1)
+pdf('plots/SupplementalFigure_GGally_pairwise_scatter_regionDependent_DMPs_4brainRegions.pdf',height=10,width=10,useDingbats=FALSE)
+GGally::ggscatmat(dat, columns = 1:4 )
+dev.off()
 
+## Main
+dat = regionSpecific_mergedStats[allRegion_mergedStats[allRegion_mergedStats$Primary_subset_mainEffect_adj.P.Val<0.05,'Name'],c('CRB_subset_NoAdj_logFC','DLPFC_subset_NoAdj_logFC','HIPPO_subset_NoAdj_logFC','ERC_subset_NoAdj_logFC') ]
+colnames(dat) <- jaffelab::ss(colnames(dat),"_",1)
+pdf('plots/SupplementalFigure_GGally_pairwise_scatter_crossRegion_DMPs_4brainRegions.pdf',height=10,width=10,useDingbats=FALSE)
+GGally::ggscatmat(dat, columns = 1:4 )
+dev.off()
 
 ##############	 
 	 

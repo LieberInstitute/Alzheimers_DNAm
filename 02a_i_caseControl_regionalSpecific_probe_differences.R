@@ -29,7 +29,7 @@ fit <- lmFit(bVals[,regionIndex], mod)
 fitEb <- eBayes(fit)
 subStats_DLPFC <- topTable(fitEb, num=Inf, coef=2,genelist=goldsetSub, confint=TRUE)
 table(subStats_DLPFC$adj.P.Val<0.10)
-colnames(subStats_DLPFC)[40:45] <- paste0("DLPFC_subset_NoAdj_",colnames(subStats_DLPFC)[40:45])
+colnames(subStats_DLPFC)[40:47] <- paste0("DLPFC_subset_NoAdj_",colnames(subStats_DLPFC)[40:47])
 
 ####---Hippo---####
 regionIndex=which(pd$Region=="HIPPO" & pd$keepList )

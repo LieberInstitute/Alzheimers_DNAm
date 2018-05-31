@@ -9,10 +9,14 @@ max(oldStats[oldStats$Primary_subset_mainEffect_adj.P.Val<0.05,'Primary_subset_m
 load('/dcl01/lieber/ajaffe/Steve/Alz/Paper/rdas/caseControl_DMC_allRegion.rda')
 newStats=allStats
 newStats_sig = newStats$Name[newStats$Primary_subset_mainEffect_adj.P.Val<0.05]
+newStats_sensitivity = newStats$Name[newStats$Sensitivity_subset_mainEffect_adj.P.Val<0.05]
+
 max(newStats[newStats$Primary_subset_mainEffect_adj.P.Val<0.05,'Primary_subset_mainEffect_P.Value'])
 
 
 table(oldSig=oldStats$Primary_subset_mainEffect_adj.P.Val<0.05, newSig=oldStats$Name %in% newStats_sig )
+
+table(oldSig=oldStats$Primary_subset_mainEffect_adj.P.Val<0.05, newSig=oldStats$Name %in% newStats_sensitivity )
 ##
 cor.test(oldStats$Primary_subset_mainEffect_logFC,newStats[oldStats$Name,'Primary_subset_mainEffect_logFC'])
 

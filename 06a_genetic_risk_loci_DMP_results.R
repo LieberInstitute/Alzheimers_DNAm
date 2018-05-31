@@ -42,3 +42,9 @@ fisher.test(table(hypo$within_genetic_risk_loci,hypo$Primary_subset_mainEffect_P
 fisher.test(table(allStats$within_genetic_risk_loci,allStats$Primary_subset_interactionEffect_adj.P.Val<0.05 ) )
 fisher.test(table(allStats$within_genetic_risk_loci,allStats$Primary_subset_interactionEffect_P.Value<0.01 ) )
 
+##
+fisher.test(table(riskLoci=allStats$within_genetic_risk_loci,DMP=allStats$Sensitivity_subset_mainEffect_adj.P.Val<0.05 ) ) ## FDR cutoff
+fisher.test(table(allStats$within_genetic_risk_loci,allStats$Sensitivity_subset_mainEffect_P.Value<0.01 ) )
+
+fisher.test(table(allStats$within_genetic_risk_loci,allStats$Sensitivity_subset_interactionEffect_adj.P.Val<0.05 ) )
+fisher.test(table(allStats$within_genetic_risk_loci,allStats$Sensitivity_subset_interactionEffect_P.Value<0.01 ) )

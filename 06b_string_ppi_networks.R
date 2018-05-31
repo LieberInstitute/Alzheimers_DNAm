@@ -1,14 +1,10 @@
 ## First determine potential background--it the intersection of all genes that could have been tagged by DNAm and all genes that could have been differentially expressed
-
+setwd('/dcl01/lieber/ajaffe/Steve/Alz/Paper')
 ##### GET METHYLATION GENES
-load('/dcl01/lieber/ajaffe/Steve/Alz/rdas/cleanSamples_n380_processed_data_postfiltered.rda')
-library(IlluminaHumanMethylation450kanno.ilmn12.hg19)
-ann450k = getAnnotation(IlluminaHumanMethylation450kanno.ilmn12.hg19)
-ann450kSub <- ann450k[match(rownames(bVals),ann450k$Name),
-                      c(1:4,12:19,24:ncol(ann450k))]
+load('rdas/cleanSamples_n377_processed_data_postfiltered.rda')
 
 ### drop probes that do not map to hg38
-load('/dcl01/lieber/ajaffe/Steve/meth450k_annotation_hg38/hg38_out/rdas/hg38_goldset_annotation.rda') #load hg38 position annotation
+load('/dcl01/lieber/ajaffe/Steve/meth450k_annotation_hg38/hg38_out/rdas/goldset_GencodeAnnotation.rda') #load hg38 position annotation
 drop_hg38_unmappable = which(!rownames(bVals) %in% goldset$Name)
 #7966
 length(drop_hg38_unmappable) 
@@ -17,9 +13,8 @@ length(drop_hg38_unmappable)
 bVals <- bVals[-drop_hg38_unmappable, ] 					  
 goldsetSub <- goldset[match(rownames(bVals),goldset$Name), ]					  
 goldsetSub = plyr::rename(goldsetSub, c('predictedPos'='pos_hg38','pos'='pos_hg19','chr'='chr_hg19') )
-goldsetSub = goldsetSub[,c('chr_hg19','pos_hg19','chr_hg38','pos_hg38', intersect(colnames(goldsetSub), colnames(ann450kSub)) )]		
 
-DNAm_Genes = unique(unlist(strsplit(goldsetSub$UCSC_RefGene_Name, split=';') ))
+DNAm_Genes = unique(unlist(strsplit(goldsetSub$within10kb_geneSymbol_gencode_hg38, split=';') ))
 ###### GET RNASEQ GENES
 load('/dcl01/ajaffe/data/lab/libd_alzheimers/grant_analysis_hg38/LIBD_AD_results_hg38.Rdata',verbose=T)
 RNAseq_Genes = unique(results$Symbol)
@@ -29,22 +24,19 @@ GeneBackground = intersect(DNAm_Genes, RNAseq_Genes)
 ######### STRINGdb
 library(STRINGdb)
 library(igraph)
-geneList <- read.csv('/dcl01/lieber/ajaffe/Steve/Alz/csvs/top_DMP_methylation_versus_corresponding_gene_expression_nomDE_with_nomAssoc_mainEffect.csv')
+geneList <- read.csv('csvs/SupplementalTable_top_DMP_methylation_versus_corresponding_gene_expression_nomDE_with_nomAssoc_mainEffect.csv')
 
-###### Score 400
-string_db <- STRINGdb$new( version="10", species=9606, score_threshold=400, input_directory="" )
+###### Score 200
+string_db <- STRINGdb$new( version="10", species=9606, score_threshold=200, input_directory="" )
 backgroundV = string_db$map( data.frame(gene=as.character(unique(GeneBackground))), "gene", removeUnmappedRows = TRUE, takeFirst=TRUE )
 string_db$set_background(backgroundV$STRING_id)
-background = string_db$set_background(backgroundV$STRING_id)
-background.subgraph <- string_db$get_subnetwork(c(background) )
 
 V(background)$name
 
 ###### Score 400
-geneList_proteinMapped <- string_db$map( data.frame(gene=as.character(unique(geneList$GeneSymbol))), "gene", removeUnmappedRows = TRUE, takeFirst=TRUE )
-
+geneList_proteinMapped <- string_db$map( data.frame(gene=as.character(unique(geneList$GeneSymbol[geneList$minCorrelation_pvalue<0.05]))), "gene", removeUnmappedRows = TRUE, takeFirst=TRUE )
 string_db$get_ppi_enrichment(unique(geneList_proteinMapped$STRING_id))
-string_db$backgroundV
+
 
 degree(my.subgraph)==0
 string_db$get_proteins()
@@ -114,16 +106,18 @@ function (graph, v, mode = c("out", "in", "all", "total"))
 my.subgraph <- string_db$get_subnetwork(c(L, a))
 my.subgraph <- string_db$get_subnetwork(c(L) )
 
-my.subgraph <- string_db$get_subnetwork(c(L, Alz.pathway.proteins))
-plot(my.subgraph, vertex.size=2)
 
 trimmed_subgraph=delete.vertices(simplify(my.subgraph), degree(my.subgraph)==0)
+
+## Build layout
 l <- layout_with_fr(trimmed_subgraph)
 l <- norm_coords(l, ymin=-1, ymax=1, xmin=-1, xmax=1)
-pdf('/dcl01/lieber/ajaffe/Steve/Alz/plots/string_ppi_networks_subgraph_someInteraction_igraphed_score400.pdf',height=12,width=12)
+
+pdf('plots/Figure_string_ppi_networks_subgraph_someInteraction_igraphed_score400.pdf',height=12,width=12)
 plot(trimmed_subgraph, vertex.size=2, vertex.label=geneList_proteinMapped[match(V(trimmed_subgraph)$name, geneList_proteinMapped$STRING_id ),'gene'], vertex.label.dist=0.6, layout = l*2, vertex.label.font=3) 
 dev.off()
-png('/dcl01/lieber/ajaffe/Steve/Alz/plots/string_ppi_networks_subgraph_someInteraction_igraphed_score400.png',units="in",height=10,width=10,res=72)
+
+png('plots/Figure_string_ppi_networks_subgraph_someInteraction_igraphed_score400.png',units="in",height=10,width=10,res=72)
 plot(trimmed_subgraph, vertex.size=2, vertex.label=geneList_proteinMapped[match(V(trimmed_subgraph)$name, geneList_proteinMapped$STRING_id ),'gene'], vertex.label.dist=0.6, layout = l*2, vertex.label.font=3) 
 dev.off()
 

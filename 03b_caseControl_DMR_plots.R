@@ -58,7 +58,7 @@ sigDMR_subsetMain = sigDMR_subsetMain[order(sigDMR_subsetMain$cluster,sigDMR_sub
 write.csv(sigDMR_subsetMain,'csvs/SupplementalTable_sigDMRs_regionSpecificModels.csv',row.names=F) 
 
 #######
-cl = clusterMaker(as.character(goldsetSub$chr_hg38), goldsetSub$predictedPos, maxGap=500)
+cl = clusterMaker(as.character(goldsetSub$chr_hg38), goldsetSub$pos_hg38, maxGap=500)
 
 dat= mergedDMR[mergedDMR$Model == "Subset Main", ] 
 dat[order(dat$fwer),]
@@ -76,15 +76,31 @@ pdf('plots/SupplementalFigure_subset_allRegions_DUSP22.pdf',w=9,useDingbats=FALS
 dmrPlot(regions=dat[c(1),], p=cleaned_bVals, chr=goldsetSub$chr_hg38, pos=goldsetSub$pos_hg38, cluster=cl, genomicState=GenomicState.Hsapiens.UCSC.hg38.knownGene$fullGenome, coi=pd$Dx[subjectIndex], genes=genes,  cols = c("black","#ab1323" ), Jitter=TRUE,linesSmooth=TRUE, build='hg38')
 dev.off()
 
-pdf('plots/SupplementalFigure_subset_allRegions_DLGAP2.pdf',w=9,useDingbats=FALSE)
+pdf('plots/Figure_subset_allRegions_ANKRD30B.pdf',w=9,useDingbats=FALSE)
+dmrPlot(regions=dat[c(2),], p=cleaned_bVals, chr=goldsetSub$chr_hg38, pos=goldsetSub$pos_hg38, cluster=cl, genomicState=GenomicState.Hsapiens.UCSC.hg38.knownGene$fullGenome, coi=pd$Dx[subjectIndex], genes=genes,  cols = c("black","#ab1323" ), Jitter=TRUE,linesSmooth=TRUE, build='hg38')
+dev.off()
+
+
+pdf('plots/SupplementalFigure_subset_allRegions_JRK.pdf',w=9,useDingbats=FALSE)
 dmrPlot(regions=dat[c(3),], p=cleaned_bVals, chr=goldsetSub$chr_hg38, pos=goldsetSub$pos_hg38, cluster=cl, genomicState=GenomicState.Hsapiens.UCSC.hg38.knownGene$fullGenome, coi=pd$Dx[subjectIndex], genes=genes,  cols = c("black","#ab1323" ), Jitter=TRUE,linesSmooth=TRUE, build='hg38')
 dev.off()
 
-
-pdf('plots/Figure_subset_allRegions_ANKRD30B.pdf',w=9,useDingbats=FALSE)
-dmrPlot(regions=dat[c(1,3),], p=cleaned_bVals, chr=goldsetSub$chr_hg38, pos=goldsetSub$pos_hg38, cluster=cl, genomicState=GenomicState.Hsapiens.UCSC.hg38.knownGene$fullGenome, coi=pd$Dx[subjectIndex], genes=genes,  cols = c("black","#ab1323" ), Jitter=TRUE,linesSmooth=TRUE, build='hg38')
+pdf('plots/SupplementalFigure_subset_allRegions_NAPRT.pdf',w=9,useDingbats=FALSE)
+dmrPlot(regions=dat[c(4),], p=cleaned_bVals, chr=goldsetSub$chr_hg38, pos=goldsetSub$pos_hg38, cluster=cl, genomicState=GenomicState.Hsapiens.UCSC.hg38.knownGene$fullGenome, coi=pd$Dx[subjectIndex], genes=genes,  cols = c("black","#ab1323" ), Jitter=TRUE,linesSmooth=TRUE, build='hg38')
 dev.off()
 
-pdf('plots/subset_allRegions_top_DMRs.pdf',w=9,useDingbats=FALSE)
+
+pdf('plots/Figure_subset_allRegions_top_DMRs.pdf',w=9,useDingbats=FALSE)
 dmrPlot(regions=dat[1:20,], p=cleaned_bVals, chr=goldsetSub$chr_hg38, pos=goldsetSub$pos_hg38, cluster=cl, genomicState=GenomicState.Hsapiens.UCSC.hg38.knownGene$fullGenome, coi=pd$Dx[subjectIndex], genes=genes,  cols = c("black","#ab1323" ), Jitter=TRUE,linesSmooth=TRUE, build='hg38')
 dev.off()
+
+##
+load('rdas/merged_DMR_NeuN_Sensitivity.rda',verbose=T)
+library(TxDb.Hsapiens.UCSC.hg38.knownGene)
+theTranscripts = annotateTranscripts(TxDb.Hsapiens.UCSC.hg38.knownGene,codingOnly=TRUE)
+
+an = annotateNearest(mergedDMR, theTranscripts)
+mergedDMR$nearestGene = as.character(theTranscripts$Gene)[an$subjectHits]
+mergedDMR$nearestGeneDist = an$dist
+mergedDMR$width=mergedDMR$end-mergedDMR$start
+mergedDMR[mergedDMR$fwer<0.05,]

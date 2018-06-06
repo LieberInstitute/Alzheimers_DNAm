@@ -127,6 +127,27 @@ full_res_ss$min_Bonf = sapply(full_res_ss$minCorrelation_pvalue,p.adjust,method=
 
 write.csv(full_res_ss, file='csvs/SupplementalTable_top_DMP_methylation_versus_corresponding_gene_expression_nomDE_with_nomAssoc_mainEffect.csv',row.names=F)			 
 
+full_res_ss = read.csv('csvs/SupplementalTable_top_DMP_methylation_versus_corresponding_gene_expression_nomDE_with_nomAssoc_mainEffect.csv')
+
+x=table(table(full_res$CpG))		
+y=table(table(full_res_ss$CpG))
+n <- max(length(x), length(y))
+length(x) <- n                      
+length(y) <- n
+distr = cbind(x,y )
+distr[is.na(distr)] = 0
+chisq.test(distr,simulate.p.value=TRUE,B=100000)
+
+full_res_ss = full_res_ss[order(full_res_ss$minCorrelation_pvalue),]
+full_res_ss = full_res_ss[full_res_ss$minCorrelation_pvalue<0.05 & !duplicated(full_res_ss$EnsemblGene),]
+
+
+
+res = sapply(paste0(full_res_ss$region_minP,"_Estimate"), function(x) {full_res_ss[,x]} )
+res = diag(res)
+
+apply(foiMain,1,function(x) x[paste0(foiMain$region_minP,"_log2FC")])
+
 pdf('plots/SupplementalFigure_top_DMP_methylation_versus_corresponding_gene_expression_nomDE_with_nomAssoc_mainEffect.pdf')
 for (i in 1:nrow(full_res_ss)) {
 

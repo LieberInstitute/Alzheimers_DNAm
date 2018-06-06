@@ -209,3 +209,25 @@ dev.off()
 
 table(primary=primaryStats[,'ALL_subset_mainEffect_adj.P.Val']<0.05, 
 	 sensitivity=sensitivityStats[rownames(primaryStats),"ALL_subset_mainEffect_adj.P.Val"]<0.05)
+####
+setwd('/dcl01/lieber/ajaffe/Steve/Alz/Paper')
+library(VennDiagram)
+load('rdas/caseControl_DMC_allRegion.rda')
+## sig
+models_of_interest = c("Primary_subset_mainEffect_adj.P.Val", "Primary_subset_interactionEffect_adj.P.Val")
+FDR05_main_vs_interaction =lapply( models_of_interest, function(model, thresh=0.05, col = 'Name') {
+allStats[allStats[,model] < thresh,col] })
+
+names(FDR05_main_vs_interaction) <- c("Cross-region", "Region-dependent")
+
+venn_fdr05 = venn.diagram(x = FDR05_main_vs_interaction,
+							category.names = names(FDR05_main_vs_interaction),
+							filename = NULL,
+							fill = c('red', 'blue'),
+							cat.just=list(c(0.9,1.5) , c(-0.8,5) ), cex=5, cat.cex=3
+							)							
+grid.draw(venn_fdr05)
+
+pdf(file='plots/Figure_crossRegion_vs_regionDependent_vennDiagram_FDR05.pdf',height=12,width=12)
+    grid.draw(venn_fdr05)
+dev.off()

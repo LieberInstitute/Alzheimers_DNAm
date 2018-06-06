@@ -1,289 +1,96 @@
 ###### Test all-region models
 library('IlluminaHumanMethylation450kanno.ilmn12.hg19')
-load('/dcl01/lieber/ajaffe/Steve/Alz/rdas/caseControl_DMC_allRegion.rda')
+setwd('/dcl01/lieber/ajaffe/Steve/Alz/Paper')
+
+load('rdas/caseControl_DMC_allRegion.rda')
+
+library(org.Hs.eg.db)
+library(limma)
+
+flatten_annotation <- function (dat=allStats, annotation_col='within10kb_geneSymbol_gencode_hg38') {
+missing <-  dat[,annotation_col]==""
+ann.keep <- dat[!missing,c('Name',annotation_col)]
+geneslist <- strsplit(ann.keep[,annotation_col], split = ";")
+names(geneslist) <- ann.keep$Name
+    flat <- data.frame(symbol = unlist(geneslist))
+    flat$symbol <- as.character(flat$symbol)
+    flat$cpg <- substr(rownames(flat), 1, 10)
+    flat$alias <- limma::alias2SymbolTable(flat$symbol)
+    eg <- toTable(org.Hs.egSYMBOL2EG)
+    m <- match(flat$symbol, eg$symbol)
+    flat$entrezid <- eg$gene_id[m]
+    flat <- flat[!is.na(flat$entrezid), ]
+    id <- paste(flat$cpg, flat$entrezid, sep = ".")
+    d <- duplicated(id)
+    flat.u <- flat[!d, ]
+	return(flat.u)
+	}
 ##
-testOntologies = function(sigCpg, allCpG) {
-cat(".")
-out <- tryCatch ( {
-gstGO <- missMethyl::gometh(sig.cpg=sigCpg, all.cpg=allCpG, collection="GO")
-gstKEGG <- missMethyl::gometh(sig.cpg=sigCpg, all.cpg=allCpG, collection="KEGG")
-return( list(GO=gstGO,KEGG=gstKEGG) ) },
-error=function(cond) {
-            # Choose a return value in case of error
-            return(NULL)
-        }
-)
-return(out) }
+gomethGen= function(flat.u=flat.u, sig.cpg) {
+    sig.cpg <- as.character(sig.cpg)
+    sig.cpg <- sig.cpg[!is.na(sig.cpg)]
+    all.cpg <- unique(flat.u$cpg)
+    sig.cpg <- unique(sig.cpg)
+    m1 <- match(flat.u$cpg, sig.cpg)
+    eg.sig <- flat.u$entrezid[!is.na(m1)]
+    eg.sig <- unique(eg.sig)
+    m2 <- match(flat.u$cpg, all.cpg)
+    eg.all <- flat.u$entrezid[!is.na(m2)]
+    freq_genes <- table(eg.all)
+    eg.universe <- names(freq_genes)
+    test.de <- as.integer(eg.universe %in% eg.sig)
+    sorted.eg.sig <- eg.universe[test.de == 1]
+    out <- list(sig.eg = sorted.eg.sig, universe = eg.universe,
+        freq = freq_genes, de = test.de)
+pwf <- missMethyl:::.estimatePWF(D = test.de, bias = as.vector(freq_genes))
+GOgst <- limma::goana(sorted.eg.sig, universe = eg.universe,
+                prior.prob = pwf)
+GOgst$FDR <- p.adjust(GOgst$P.DE, method = "BH")
+GOgst = GOgst[order(GOgst$P.DE),]				
+				
+KEGGgst <- limma::kegga(sorted.eg.sig, universe = eg.universe,
+                prior.prob = pwf)
+KEGGgst$FDR <- p.adjust(KEGGgst$P.DE, method = "BH")
+KEGGgst = KEGGgst[order(KEGGgst$P.DE),]				
+goRes = list(GO=GOgst, KEGG=KEGGgst)
+return(goRes)
+}				
 
-############# FDR 5% split ##########
-tests = grep("adj.P.Val", colnames(allStats),value=TRUE )
-mainTests = grep("Primary_subset_main",tests, value=T)
-
-colSums(allStats[,mainTests,drop=F] <0.05)
-##
-sigStatList = lapply(mainTests, function(test) { 
-  x = allStats[which(allStats[,test]<0.05), c("Name",gsub("_adj.P.Val","_logFC",test))]
-  x$Test = gsub("_adj.P.Val","", test)
-  colnames(x) <-c("Name","LFC","Test")
-  return(x)} )
-  
-sigStats = do.call("rbind", sigStatList)
-sigStats$Sign = sign(sigStats$LFC)
-sigStats$lab =paste0(sigStats$Sign, "_", sigStats$Test)
-
-sigCpg = split(sigStats$Name, sigStats$lab)
-allCpG=unique(allStats$Name)
-
-##
-
-allRegion_GeneOntology = lapply(sigCpg, testOntologies, allCpG)
-names(allRegion_GeneOntology) <- gsub("_adj.P.Val","", names(sigCpg) )
-names(allRegion_GeneOntology) = gsub("Effect","",names(allRegion_GeneOntology))
-names(allRegion_GeneOntology) = gsub("Primary","Unadj",names(allRegion_GeneOntology))
-names(allRegion_GeneOntology) = gsub("Sensitivity","Adj",names(allRegion_GeneOntology))
-
-##
-allRegion_GeneOntology_list= unlist(allRegion_GeneOntology,recursive=F)
-allRegion_GeneOntology_list_split = c( allRegion_GeneOntology_list[grep("KEGG",names(allRegion_GeneOntology_list) )],unlist(lapply(allRegion_GeneOntology_list[grep("GO",names(allRegion_GeneOntology_list) )], function(x) split(x, x$Ont)),recursive=F) )
-## Reordering
-allRegion_GeneOntology_list_split = allRegion_GeneOntology_list_split[gtools::mixedorder( jaffelab::ss(names(allRegion_GeneOntology_list_split), "\\.",1)) ]
-allRegion_GeneOntology_list_split = allRegion_GeneOntology_list_split[gtools::mixedorder(gsub(".*1_","", names(allRegion_GeneOntology_list_split) ) )]
-
-
-allRegion_GeneOntology_list_split= lapply(allRegion_GeneOntology_list_split, function(x) x[order(x$'FDR',x$'P.DE'),] )
-allRegion_GeneOntology_list_split= lapply(allRegion_GeneOntology_list_split, tibble::rownames_to_column  )
-##save
-save(allRegion_GeneOntology_list_split, file='/dcl01/lieber/ajaffe/Steve/Alz/rdas/allRegion_main_GO_Analysis_FDR05_DMC_case_control_stats_Split.rda')	
-openxlsx::write.xlsx(allRegion_GeneOntology_list_split, file='/dcl01/lieber/ajaffe/Steve/Alz/csvs/allRegion_main_GO_Analysis_FDR05_DMP_Results_Split.xlsx')
-
-openxlsx::write.xlsx(allRegion_GeneOntology_list_split[grep("-1_", names(allRegion_GeneOntology_list_split))], file='/dcl01/lieber/ajaffe/Steve/Alz/csvs/allRegion_main_GO_Analysis_FDR05_DMP_Results_hypomethylated.xlsx')
-openxlsx::write.xlsx(allRegion_GeneOntology_list_split[-grep("-1_", names(allRegion_GeneOntology_list_split))], file='/dcl01/lieber/ajaffe/Steve/Alz/csvs/allRegion_main_GO_Analysis_FDR05_DMP_Results_hypermethylated.xlsx')
-
-############# FDR 5% interaction ##########
-interactionTests = "Primary_subset_interactionEffect_adj.P.Val"
-colSums(allStats[,interactionTests,drop=F] <0.05)
-allCpG=unique(allStats$Name)
-sigCpg= lapply(interactionTests, function(test) {allStats[allStats[,test]<.05, 'Name']})
-
-interaction_GeneOntology = lapply(sigCpg,testOntologies, allCpG)
-names(interaction_GeneOntology) <- "Interaction"
+flat.u = flatten_annotation()
+ResUnsplit = gomethGen(flat.u=flat.u,sig.cpg=allStats[allStats$Primary_subset_mainEffect_adj.P.Val<0.05,'Name']) 
+ResUnsplit = c(split(ResUnsplit[[1]],ResUnsplit[[1]]$Ont), ResUnsplit[2])
+ResUnsplit = lapply(ResUnsplit, tibble::rownames_to_column,var="ID")
+names(ResUnsplit)[1:3] = paste0("GO_",names(ResUnsplit)[1:3]) 
 
 ##
-interaction_GeneOntology_list= unlist(interaction_GeneOntology,recursive=F)
-interaction_GeneOntology_list_split = c( interaction_GeneOntology_list[grep("KEGG",names(interaction_GeneOntology_list) )],unlist(lapply(interaction_GeneOntology_list[grep("GO",names(interaction_GeneOntology_list) )], function(x) split(x, x$Ont)),recursive=F) )
-
-interaction_GeneOntology_list_split= lapply(interaction_GeneOntology_list_split, function(x) x[order(x$'FDR',x$'P.DE'),] )
-interaction_GeneOntology_list_split= lapply(interaction_GeneOntology_list_split, tibble::rownames_to_column  )
-##save
-openxlsx::write.xlsx(interaction_GeneOntology_list_split, file='/dcl01/lieber/ajaffe/Steve/Alz/csvs/interaction_GO_Analysis_FDR05_DMP_Results_dupCor.xlsx')
-
-
-
-########################################### Everything else
-
-
-##### FDR 10 full ####################
-allCpG=unique(allStats$Name)
-sigCpg= lapply(tests, function(test) {allStats[allStats[,test]<.10, 'Name']})
-
-allRegion_GeneOntology = lapply(sigCpg,testOntologies, allCpG)
-names(allRegion_GeneOntology) <- gsub("_adj.P.Val","",tests)
-names(allRegion_GeneOntology) = gsub("Effect","",names(allRegion_GeneOntology))
-names(allRegion_GeneOntology) = gsub("Primary","Unadj",names(allRegion_GeneOntology))
-names(allRegion_GeneOntology) = gsub("Sensitivity","Adj",names(allRegion_GeneOntology))
-names(allRegion_GeneOntology) = gsub("interaction","int",names(allRegion_GeneOntology))
+ResHyper = gomethGen(flat.u=flat.u,sig.cpg=allStats[allStats$Primary_subset_mainEffect_adj.P.Val<0.05 & allStats$Primary_subset_mainEffect_logFC>0,'Name']) 
+ResHyper = c(split(ResHyper[[1]],ResHyper[[1]]$Ont), ResHyper[2])
+ResHyper = lapply(ResHyper, tibble::rownames_to_column,var="ID")
+names(ResHyper)[1:3] = paste0("GO_",names(ResHyper)[1:3]) 
 
 ##
-allRegion_GeneOntology_list= unlist(allRegion_GeneOntology,recursive=F)
-allRegion_GeneOntology_list_split = c( allRegion_GeneOntology_list[grep("KEGG",names(allRegion_GeneOntology_list) )],unlist(lapply(allRegion_GeneOntology_list[grep("GO",names(allRegion_GeneOntology_list) )], function(x) split(x, x$Ont)),recursive=F) )
-allRegion_GeneOntology_list_split = allRegion_GeneOntology_list_split[gtools::mixedorder(jaffelab::ss(names(allRegion_GeneOntology_list_split), "\\.",1))]
-
-
-allRegion_GeneOntology_list_split= lapply(allRegion_GeneOntology_list_split, function(x) x[order(x$'FDR',x$'P.DE'),] )
-allRegion_GeneOntology_list_split= lapply(allRegion_GeneOntology_list_split, tibble::rownames_to_column  )
-##save
-save(allRegion_GeneOntology_list_split, file='/dcl01/lieber/ajaffe/Steve/Alz/rdas/allRegion_GO_Analysis_FDR10_DMC_case_control_stats_Unsplit.rda')	
-openxlsx::write.xlsx(allRegion_GeneOntology_list_split, file='/dcl01/lieber/ajaffe/Steve/Alz/csvs/allRegion_GO_Analysis_FDR10_DMP_Results_Unsplit.xlsx')
-
-##### FDR 5 full ####################
-allCpG=unique(allStats$Name)
-sigCpg= lapply(tests, function(test) {allStats[allStats[,test]<.05, 'Name']})
-
-allRegion_GeneOntology = lapply(sigCpg,testOntologies, allCpG)
-names(allRegion_GeneOntology) <- gsub("_adj.P.Val","",tests)
-names(allRegion_GeneOntology) = gsub("Effect","",names(allRegion_GeneOntology))
-names(allRegion_GeneOntology) = gsub("Primary","Unadj",names(allRegion_GeneOntology))
-names(allRegion_GeneOntology) = gsub("Sensitivity","Adj",names(allRegion_GeneOntology))
-names(allRegion_GeneOntology) = gsub("interaction","int",names(allRegion_GeneOntology))
+ResHypo = gomethGen(flat.u=flat.u,sig.cpg=allStats[allStats$Primary_subset_mainEffect_adj.P.Val<0.05 & allStats$Primary_subset_mainEffect_logFC<0,'Name']) 
+ResHypo = c(split(ResHypo[[1]],ResHypo[[1]]$Ont), ResHypo[2])
+ResHypo = lapply(ResHypo, tibble::rownames_to_column,var="ID")
+names(ResHypo)[1:3] = paste0("GO_",names(ResHypo)[1:3]) 
 
 ##
-allRegion_GeneOntology_list= unlist(allRegion_GeneOntology,recursive=F)
-allRegion_GeneOntology_list_split = c( allRegion_GeneOntology_list[grep("KEGG",names(allRegion_GeneOntology_list) )],unlist(lapply(allRegion_GeneOntology_list[grep("GO",names(allRegion_GeneOntology_list) )], function(x) split(x, x$Ont)),recursive=F) )
-allRegion_GeneOntology_list_split = allRegion_GeneOntology_list_split[gtools::mixedorder(jaffelab::ss(names(allRegion_GeneOntology_list_split), "\\.",1))]
+ResInter = gomethGen(flat.u=flat.u,sig.cpg=allStats[allStats$Primary_subset_interactionEffect_adj.P.Val<0.05,'Name']) 
+ResInter = c(split(ResInter[[1]],ResInter[[1]]$Ont), ResInter[2])
+ResInter = lapply(ResInter, tibble::rownames_to_column,var="ID")
+names(ResInter)[1:3] = paste0("GO_",names(ResInter)[1:3]) 
 
 
-allRegion_GeneOntology_list_split= lapply(allRegion_GeneOntology_list_split, function(x) x[order(x$'FDR',x$'P.DE'),] )
-allRegion_GeneOntology_list_split= lapply(allRegion_GeneOntology_list_split, tibble::rownames_to_column  )
-##save
-save(allRegion_GeneOntology_list_split, file='/dcl01/lieber/ajaffe/Steve/Alz/rdas/allRegion_GO_Analysis_FDR10_DMC_case_control_stats_Unsplit.rda')	
-openxlsx::write.xlsx(allRegion_GeneOntology_list_split, file='/dcl01/lieber/ajaffe/Steve/Alz/csvs/allRegion_GO_Analysis_FDR10_DMP_Results_Unsplit.xlsx')
+## Save results
+openxlsx::write.xlsx(ResUnsplit, file='csvs/SupplementalTable_CrossRegion_GO_Results_Unsplit.xlsx')
+openxlsx::write.xlsx(ResHyper, file='csvs/SupplementalTable_CrossRegion_GO_Results_Hypermethylated.xlsx')
+openxlsx::write.xlsx(ResHypo, file='csvs/SupplementalTable_CrossRegion_GO_Results_Hypomethylated.xlsx')
+openxlsx::write.xlsx(ResInter, file='csvs/SupplementalTable_RegionDependent_GO_Results.xlsx')
 
-
-##### FDR 1 full ####################
-allCpG=unique(allStats$Name)
-sigCpg= lapply(tests, function(test) {allStats[allStats[,test]<.01, 'Name']})
-
-allRegion_GeneOntology = lapply(sigCpg,testOntologies, allCpG)
-names(allRegion_GeneOntology) <- gsub("_adj.P.Val","",tests)
-names(allRegion_GeneOntology) = gsub("Effect","",names(allRegion_GeneOntology))
-names(allRegion_GeneOntology) = gsub("Primary","Unadj",names(allRegion_GeneOntology))
-names(allRegion_GeneOntology) = gsub("Sensitivity","Adj",names(allRegion_GeneOntology))
-names(allRegion_GeneOntology) = gsub("interaction","int",names(allRegion_GeneOntology))
-
-##
-allRegion_GeneOntology_list= unlist(allRegion_GeneOntology,recursive=F)
-allRegion_GeneOntology_list_split = c( allRegion_GeneOntology_list[grep("KEGG",names(allRegion_GeneOntology_list) )],unlist(lapply(allRegion_GeneOntology_list[grep("GO",names(allRegion_GeneOntology_list) )], function(x) split(x, x$Ont)),recursive=F) )
-allRegion_GeneOntology_list_split = allRegion_GeneOntology_list_split[gtools::mixedorder(jaffelab::ss(names(allRegion_GeneOntology_list_split), "\\.",1))]
-
-
-allRegion_GeneOntology_list_split= lapply(allRegion_GeneOntology_list_split, function(x) x[order(x$'FDR',x$'P.DE'),] )
-allRegion_GeneOntology_list_split= lapply(allRegion_GeneOntology_list_split, tibble::rownames_to_column  )
-##save
-save(allRegion_GeneOntology_list_split, file='/dcl01/lieber/ajaffe/Steve/Alz/rdas/allRegion_GO_Analysis_FDR1_DMC_case_control_stats_Unsplit.rda')	
-openxlsx::write.xlsx(allRegion_GeneOntology_list_split, file='/dcl01/lieber/ajaffe/Steve/Alz/csvs/allRegion_GO_Analysis_FDR1_DMP_Results_Unsplit.xlsx')
-
-############# FDR 10 split ##########
-tests = grep("adj.P.Val", colnames(allStats),value=TRUE )
-mainTests = grep("main",tests, value=T)
-
-colSums(allStats[,mainTests] <0.10)
-##
-sigStatList = lapply(mainTests, function(test) { 
-  x = allStats[which(allStats[,test]<0.1), c("Name",gsub("_adj.P.Val","_logFC",test))]
-  x$Test = gsub("_adj.P.Val","", test)
-  colnames(x) <-c("Name","LFC","Test")
-  return(x)} )
-  
-sigStats = do.call("rbind", sigStatList)
-sigStats$Sign = sign(sigStats$LFC)
-sigStats$lab =paste0(sigStats$Sign, "_", sigStats$Test)
-
-sigCpg = split(sigStats$Name, sigStats$lab)
-allCpG=unique(allStats$Name)
-
-##
-
-allRegion_GeneOntology = lapply(sigCpg, testOntologies, allCpG)
-names(allRegion_GeneOntology) <- gsub("_adj.P.Val","", names(sigCpg) )
-names(allRegion_GeneOntology) = gsub("Effect","",names(allRegion_GeneOntology))
-names(allRegion_GeneOntology) = gsub("Primary","Unadj",names(allRegion_GeneOntology))
-names(allRegion_GeneOntology) = gsub("Sensitivity","Adj",names(allRegion_GeneOntology))
-
-##
-allRegion_GeneOntology_list= unlist(allRegion_GeneOntology,recursive=F)
-allRegion_GeneOntology_list_split = c( allRegion_GeneOntology_list[grep("KEGG",names(allRegion_GeneOntology_list) )],unlist(lapply(allRegion_GeneOntology_list[grep("GO",names(allRegion_GeneOntology_list) )], function(x) split(x, x$Ont)),recursive=F) )
-## Reordering
-allRegion_GeneOntology_list_split = allRegion_GeneOntology_list_split[gtools::mixedorder( jaffelab::ss(names(allRegion_GeneOntology_list_split), "\\.",1)) ]
-allRegion_GeneOntology_list_split = allRegion_GeneOntology_list_split[gtools::mixedorder(gsub(".*1_","", names(allRegion_GeneOntology_list_split) ) )]
-
-
-allRegion_GeneOntology_list_split= lapply(allRegion_GeneOntology_list_split, function(x) x[order(x$'FDR',x$'P.DE'),] )
-allRegion_GeneOntology_list_split= lapply(allRegion_GeneOntology_list_split, tibble::rownames_to_column  )
-##save
-save(allRegion_GeneOntology_list_split, file='/dcl01/lieber/ajaffe/Steve/Alz/rdas/allRegion_GO_Analysis_FDR10_DMC_case_control_stats_Split.rda')	
-openxlsx::write.xlsx(allRegion_GeneOntology_list_split, file='/dcl01/lieber/ajaffe/Steve/Alz/csvs/allRegion_GO_Analysis_FDR10_DMP_Results_Split.xlsx')
-
-############# FDR 1 split ##########
-tests = grep("adj.P.Val", colnames(allStats),value=TRUE )
-mainTests = grep("main",tests, value=T)
-
-colSums(allStats[,mainTests] <0.01)
-##
-sigStatList = lapply(mainTests, function(test) { 
-  x = allStats[which(allStats[,test]<0.01), c("Name",gsub("_adj.P.Val","_logFC",test))]
-  x$Test = gsub("_adj.P.Val","", test)
-  colnames(x) <-c("Name","LFC","Test")
-  return(x)} )
-  
-sigStats = do.call("rbind", sigStatList)
-sigStats$Sign = sign(sigStats$LFC)
-sigStats$lab =paste0(sigStats$Sign, "_", sigStats$Test)
-
-sigCpg = split(sigStats$Name, sigStats$lab)
-allCpG=unique(allStats$Name)
-
-##
-
-allRegion_GeneOntology = lapply(sigCpg, testOntologies, allCpG)
-names(allRegion_GeneOntology) <- gsub("_adj.P.Val","", names(sigCpg) )
-names(allRegion_GeneOntology) = gsub("Effect","",names(allRegion_GeneOntology))
-names(allRegion_GeneOntology) = gsub("Primary","Unadj",names(allRegion_GeneOntology))
-names(allRegion_GeneOntology) = gsub("Sensitivity","Adj",names(allRegion_GeneOntology))
-
-##
-allRegion_GeneOntology_list= unlist(allRegion_GeneOntology,recursive=F)
-allRegion_GeneOntology_list_split = c( allRegion_GeneOntology_list[grep("KEGG",names(allRegion_GeneOntology_list) )],unlist(lapply(allRegion_GeneOntology_list[grep("GO",names(allRegion_GeneOntology_list) )], function(x) split(x, x$Ont)),recursive=F) )
-## Reordering
-allRegion_GeneOntology_list_split = allRegion_GeneOntology_list_split[gtools::mixedorder( jaffelab::ss(names(allRegion_GeneOntology_list_split), "\\.",1)) ]
-allRegion_GeneOntology_list_split = allRegion_GeneOntology_list_split[gtools::mixedorder(gsub(".*1_","", names(allRegion_GeneOntology_list_split) ) )]
-
-
-allRegion_GeneOntology_list_split= lapply(allRegion_GeneOntology_list_split, function(x) x[order(x$'FDR',x$'P.DE'),] )
-allRegion_GeneOntology_list_split= lapply(allRegion_GeneOntology_list_split, tibble::rownames_to_column  )
-##save
-save(allRegion_GeneOntology_list_split, file='/dcl01/lieber/ajaffe/Steve/Alz/rdas/allRegion_GO_Analysis_FDR1_DMC_case_control_stats_Split.rda')	
-openxlsx::write.xlsx(allRegion_GeneOntology_list_split, file='/dcl01/lieber/ajaffe/Steve/Alz/csvs/allRegion_GO_Analysis_FDR1_DMP_Results_Split.xlsx')
-
-### nominal pathway analysis
-tests = grep("adj.P.Value", colnames(mergedStats),value=TRUE )
-tests = tests[!grepl("full",tests)]
-
-##1e-3
-colSums(mergedStats[,tests] <0.001)
-
-
-
-GO_Analysis = lapply(tests, testOntologies)
-names(GO_Analysis) <- gsub("_P.Value","",tests)
-GO_Analysis_ss = GO_Analysis[lengths(GO_Analysis)==2]
-GO_Analysis_ss= unlist(GO_Analysis_ss,recursive=F)
-GO_Analysis_ss= lapply(GO_Analysis_ss, function(x) x[order(x$'FDR',x$'P.DE'),] )
-
-save(GO_Analysis_ss, file='/dcl01/lieber/ajaffe/Steve/Alz/rdas/GO_Analysis_p1e3_DMC_case_control_stats.rda')	
-openxlsx::write.xlsx(GO_Analysis_ss, file='/dcl01/lieber/ajaffe/Steve/Alz/csvs/GO_Analysis_p1e3_DMP_Results.xlsx')
-
-##1e-4
-colSums(mergedStats[,tests] <1e-4)
-
-GO_Analysis = lapply(tests, testOntologies,thresh=1e-4)
-names(GO_Analysis) <- gsub("_P.Value","",tests)
-GO_Analysis_ss = GO_Analysis[lengths(GO_Analysis)==2]
-GO_Analysis_ss= unlist(GO_Analysis_ss,recursive=F)
-GO_Analysis_ss= lapply(GO_Analysis_ss, function(x) x[order(x$'FDR',x$'P.DE'),] )
-
-save(GO_Analysis_ss, file='/dcl01/lieber/ajaffe/Steve/Alz/rdas/GO_Analysis_p1e4_DMC_case_control_stats.rda')	
-openxlsx::write.xlsx(GO_Analysis_ss, file='/dcl01/lieber/ajaffe/Steve/Alz/csvs/GO_Analysis_p1e4_DMP_Results.xlsx')
-
-
-######### Using adjusted pvalue cutoff
-tests = grep("adj.P.Val", colnames(mergedStats),value=TRUE )
-testOntologies = function(tests) {
-cat(".")
-sigCpg= mergedStats[mergedStats[,tests]<0.10, 'Name']
-out <- tryCatch ( {
-gstGO <- missMethyl::gometh(sig.cpg=sigCpg, all.cpg=mergedStats[,'Name'], collection="GO")
-gstKEGG <- missMethyl::gometh(sig.cpg=sigCpg, all.cpg=mergedStats[,'Name'], collection="KEGG")
-return( list(GO=gstGO,KEGG=gstKEGG) ) },
-error=function(cond) {
-            # Choose a return value in case of error
-            return(NULL)
-        }
-)
-return(out) }
-
-GO_Analysis = lapply(tests, testOntologies)
-names(GO_Analysis) <- gsub("_adj.P.Val","",tests)
-GO_Analysis_ss = GO_Analysis[lengths(GO_Analysis)==2]
-GO_Analysis_ss= unlist(GO_Analysis_ss,recursive=F)
-save(GO_Analysis_ss, '/dcl01/lieber/ajaffe/Steve/Alz/rdas/GO_Analysis_DMC_case_control_stats.rda')	
-openxlsx::write.xlsx(GO_Analysis_ss, file='/dcl01/lieber/ajaffe/Steve/Alz/csvs/GO_Analysis_DMP_Results.xlsx')
+#pdf('plots/gene_differentialMethylation_CpG_bias.pdf')
+#missMethyl:::.plotBias(D = test.de, bias = as.vector(freq_genes))
+#dev.off()
+   # prior.prob <- bias
+   # o <- order(bias)
+   # prior.prob[o] <- tricubeMovingAverage(D[o], span = 0.5)
+   # prior.prob

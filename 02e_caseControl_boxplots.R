@@ -13,6 +13,9 @@ setwd('/dcl01/lieber/ajaffe/Steve/Alz/Paper')
 load('rdas/merged_DMP_regionSpecific_caseControl_stats.rda')
 load('rdas/cleanSamples_n377_processed_data_postfiltered.rda')
 
+### Pull in protein-coding genes for plotting
+gencode_v25_GR38= rtracklayer::import(con = "/dcl01/lieber/ajaffe/Emily/RNAseq-pipeline/Annotation/GENCODE/GRCh38_hg38/gencode.v25.annotationGRCh38.gtf")
+protein_coding_genes_gcV25 = unique( gencode_v25_GR38[gencode_v25_GR38$gene_type=="protein_coding",]$gene_name )
 
 pd$Dx = dplyr::recode(pd$Dx, Control = "Control", Alzheimer = "Alzheimer's")
 #### ERC Boxplots ####
@@ -25,12 +28,16 @@ dat = cbind(pd[ercSubset_keep,],
 			t( jaffelab::cleaningY(bVals[ERC_sigCpG,ercSubset_keep],mod=mod,P=2  ) ) )
 
 ### Create boxplots
-pdf('plots/best_ERC_subset_DMC_boxplots.pdf',height=10,width=12,useDingbats=FALSE)
+pdf('plots/SupplementalFigure_best_ERC_subset_DMC_boxplots.pdf',height=10,width=12,useDingbats=FALSE)
 for (cpg_i in ERC_sigCpG) {
 
 #Change column name for ggplot2 to work
 ii=match(cpg_i, regionSpecific_mergedStats$Name)
-fixName= paste(unique(unlist(strsplit(regionSpecific_mergedStats[ii,'within10kb_geneSymbol_gencode_hg38'], ";"))), collapse = ", " )
+
+pc_genes=unique(unlist(strsplit(regionSpecific_mergedStats[ii,'within10kb_geneSymbol_gencode_hg38'], ";")))
+pc_genes=pc_genes[pc_genes%in%protein_coding_genes_gcV25]
+
+fixName= paste(pc_genes, collapse = ", " )
 custom_title = paste0( 
 "ERC p=",as.character(signif(regionSpecific_mergedStats[ii,'ERC_subset_NoAdj_P.Value'],3)), 
 "\n ",fixName ) #custom title
@@ -60,12 +67,16 @@ dat = cbind(pd[dlpfcSubset_keep,],
 			t( jaffelab::cleaningY(bVals[DLPFC_sigCpG, dlpfcSubset_keep],mod=mod,P=2  ) ) )
 
 ### Create boxplots
-pdf('/dcl01/lieber/ajaffe/Steve/Alz/plots/best_DLPFC_subset_DMC_boxplots.pdf',height=10,width=12,useDingbats=FALSE)
+pdf('plots/SupplementalFigure_best_DLPFC_subset_DMC_boxplots.pdf',height=10,width=12,useDingbats=FALSE)
 for (cpg_i in DLPFC_sigCpG) {
 
 #Change column name for ggplot2 to work
 ii=match(cpg_i, regionSpecific_mergedStats$Name)
-fixName= paste(unique(unlist(strsplit(regionSpecific_mergedStats[ii,'within10kb_geneSymbol_gencode_hg38'], ";"))), collapse = ", " )
+
+pc_genes=unique(unlist(strsplit(regionSpecific_mergedStats[ii,'within10kb_geneSymbol_gencode_hg38'], ";")))
+pc_genes=pc_genes[pc_genes%in%protein_coding_genes_gcV25]
+
+fixName= paste(pc_genes, collapse = ", " )
 custom_title = paste0( 
 "DLPFC p=",as.character(signif(regionSpecific_mergedStats[ii,'DLPFC_subset_NoAdj_P.Value'],3)), 
 "\n ",fixName ) #custom title
@@ -87,7 +98,7 @@ dev.off()
 
 #####################--------- All regions boxplots -------#############################
 #### mainEffect Boxplots #####
-load('/dcl01/lieber/ajaffe/Steve/Alz/rdas/caseControl_DMC_allRegion.rda')
+load('rdas/caseControl_DMC_allRegion.rda')
 
 allStats = allStats[order(allStats$`Primary_subset_mainEffect_P.Value`),]
 main_sigCpG = allStats[allStats$`Primary_subset_mainEffect_adj.P.Val`<0.05,'Name']
@@ -100,15 +111,15 @@ dat = cbind(pd[subsetIndex,],
 			t( jaffelab::cleaningY(bVals[main_sigCpG, subsetIndex],mod=mod,P=2  ) ) )
 			
 ### Create boxplots
-pdf('/dcl01/lieber/ajaffe/Steve/Alz/plots/best_mainEffect_subset_DMC_boxplots.pdf',height=10,width=12)
+pdf('plots/Figure_best_mainEffect_subset_DMC_boxplots.pdf',height=10,width=12)
 for (cpg_i in main_sigCpG) {
 
 #Change column name for ggplot2 to work
 ii=match(cpg_i, allStats$Name)
-fixName= paste(unique(unlist(strsplit(allStats[ii,'within10kb_geneSymbol_gencode_hg38'], ";"))), collapse = ", " )
-#custom_title = paste0( 
-#"\n mainEffect p=",as.character(signif(allStats[ii,'Primary_subset_mainEffect_P.Value'],3)), 
-#"\n ",fixName ) #custom title
+pc_genes=unique(unlist(strsplit(allStats[ii,'within10kb_geneSymbol_gencode_hg38'], ";")))
+pc_genes=pc_genes[pc_genes%in%protein_coding_genes_gcV25]
+
+fixName= paste(pc_genes, collapse = ", " )
 
 custom_title = paste0( fixName ) #custom title
 
@@ -133,6 +144,7 @@ allStats = allStats[order(allStats$`Primary_subset_mainEffect_P.Value`),]
 main_sigCpG = allStats[allStats$`Primary_subset_mainEffect_adj.P.Val`<0.05,'Name']
 main_sigCpG=main_sigCpG[1:(min(length(main_sigCpG),100))]
 
+pd$DxOrdinal=factor(pd$DxOrdinal,levels=c('Control','Alz Drop','Alz Keep') )
 mod <- model.matrix(~as.numeric(DxOrdinal)+ negControl_PC1 + negControl_PC2 + Age+Sex + snpPC1 + Region, data = pd)
 
 dat = cbind(pd[],
@@ -141,15 +153,15 @@ dat = cbind(pd[],
 dat$DxOrdinal = plyr::revalue(dat$DxOrdinal, c('Alz Drop'='Asymptomatic\n Alzheimers', 'Alz Keep'='Symptomatic\n Alzheimers') )
 
 			### Create boxplots
-pdf('/dcl01/lieber/ajaffe/Steve/Alz/plots/best_mainEffect_subset_DMC_boxplots_ordinalModel.pdf',height=10,width=12)
+pdf('plots/Figure_best_mainEffect_subset_DMC_boxplots_ordinalModel.pdf',height=10,width=12)
 for (cpg_i in main_sigCpG) {
 
 #Change column name for ggplot2 to work
 ii=match(cpg_i, allStats$Name)
-fixName= paste(unique(unlist(strsplit(allStats[ii,'within10kb_geneSymbol_gencode_hg38'], ";"))), collapse = ", " )
-#custom_title = paste0( 
-#"\n mainEffect p=",as.character(signif(allStats[ii,'Primary_subset_mainEffect_P.Value'],3)), 
-#"\n ",fixName ) #custom title
+pc_genes=unique(unlist(strsplit(allStats[ii,'within10kb_geneSymbol_gencode_hg38'], ";")))
+pc_genes=pc_genes[pc_genes%in%protein_coding_genes_gcV25]
+
+fixName= paste(pc_genes, collapse = ", " )
 
 custom_title = paste0( fixName ) #custom title
 
@@ -169,7 +181,7 @@ print(a)
 dev.off()
 
 #### mainEffect Boxplots: regional effect left in #####
-load('/dcl01/lieber/ajaffe/Steve/Alz/rdas/caseControl_DMC_allRegion.rda')
+load('rdas/caseControl_DMC_allRegion.rda')
 
 allStats = allStats[order(allStats$`Primary_subset_mainEffect_P.Value`),]
 main_sigCpG = allStats[allStats$`Primary_subset_mainEffect_adj.P.Val`<0.05,'Name']
@@ -182,15 +194,15 @@ dat = cbind(pd[subsetIndex,],
 			t( jaffelab::cleaningY(bVals[main_sigCpG, subsetIndex],mod=mod,P=5  ) ) )
 			
 ### Create boxplots
-pdf('/dcl01/lieber/ajaffe/Steve/Alz/plots/best_mainEffect_subset_DMC_boxplots_regionEffectLeftIn.pdf',height=10,width=12)
+pdf('plots/best_mainEffect_subset_DMC_boxplots_regionEffectLeftIn.pdf',height=10,width=12)
 for (cpg_i in main_sigCpG) {
 
 #Change column name for ggplot2 to work
 ii=match(cpg_i, allStats$Name)
-fixName= paste(unique(unlist(strsplit(allStats[ii,'UCSC_RefGene_Name'], ";"))), collapse = ", " )
-#custom_title = paste0( 
-#"\n mainEffect p=",as.character(signif(allStats[ii,'Primary_subset_mainEffect_P.Value'],3)), 
-#"\n ",fixName ) #custom title
+pc_genes=unique(unlist(strsplit(allStats[ii,'within10kb_geneSymbol_gencode_hg38'], ";")))
+pc_genes=pc_genes[pc_genes%in%protein_coding_genes_gcV25]
+
+fixName= paste(pc_genes, collapse = ", " )
 
 custom_title = paste0( fixName ) #custom title
 
@@ -221,15 +233,15 @@ dat = cbind(pd[subsetIndex,],
 			t( jaffelab::cleaningY(bVals[int_sigCpG, subsetIndex],mod=mod,P=8  ) ) )
 
 ### Create boxplots
-pdf('/dcl01/lieber/ajaffe/Steve/Alz/plots/best_interactionEffect_subset_DMC_boxplots.pdf',height=10,width=12)
+pdf('plots/Figure_best_interactionEffect_subset_DMC_boxplots.pdf',height=10,width=12)
 for (cpg_i in int_sigCpG) {
 
 #Change column name for ggplot2 to work
 ii=match(cpg_i, allStats$Name)
-fixName= paste(unique(unlist(strsplit(allStats[ii,'UCSC_RefGene_Name'], ";"))), collapse = ", " )
-#custom_title = paste0(cpg_i, 
-#"\n interactionEffect p=",as.character(signif(allStats[ii,'Primary_subset_interactionEffect_P.Value'],3)), 
-#"\n ",fixName ) #custom title
+pc_genes=unique(unlist(strsplit(allStats[ii,'within10kb_geneSymbol_gencode_hg38'], ";")))
+pc_genes=pc_genes[pc_genes%in%protein_coding_genes_gcV25]
+
+fixName= paste(pc_genes, collapse = ", " )
 
 custom_title = paste0( fixName ) #custom title
 

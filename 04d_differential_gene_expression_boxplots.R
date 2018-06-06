@@ -4,9 +4,9 @@ theme_set(theme_bw(base_size=40) +
 				panel.grid.minor = element_blank(),
 				 plot.title = element_text(hjust = 0.5),
 				 legend.position="none"))
-
+setwd('/dcl01/lieber/ajaffe/Steve/Alz/Paper')
 ### Differential gene expression boxplots
-load('/dcl01/lieber/ajaffe/Steve/Alz/rdas/diffential_expression_statistics_for_DMP_Genes.rda')
+load('rdas/diffential_expression_statistics_for_DMP_Genes.rda')
 foiMain = foiMain[order(foiMain$MethP),]
 
 ### load gene expression data
@@ -35,13 +35,13 @@ gene_clean = do.call( "cbind", lapply(cleanDat, `[[`, 2) )
 dat = cbind(pd_clean, t(gene_clean) )
 
 ###### MAKE BOXPLOTS
-pdf('/dcl01/lieber/ajaffe/Steve/Alz/plots/differential_expression_boxplots_for_mainEffect_DMP_genes.pdf',height=10,width=12)
+pdf('plots/Figure_differential_expression_boxplots_for_crossRegion_DMP_genes.pdf',height=10,width=12)
 for (gene_i in unique(foiMain$gencodeID[foiMain$minExprs_pvalue<1e-2]) ) {
 
 #Change column name for ggplot2 to work
 
 #custom_title = paste0(foiMain[match(gene_i, foiMain$gencodeID),'Gene'], "\n",gene_i ) #custom title
-custom_title = paste0( foiMain[match(gene_i, foiMain$gencodeID),'Gene'] ) #custom title
+custom_title = paste0( foiMain[match(gene_i, foiMain$gencodeID),'Symbol'] ) #custom title
 
 a = ggplot(dat, aes_string(x = 'Region', y = gene_i, fill='Dx')) +
         geom_boxplot(outlier.colour = NA, alpha = 0.1, col='black')  + 

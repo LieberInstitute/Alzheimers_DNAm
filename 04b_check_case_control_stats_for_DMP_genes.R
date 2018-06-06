@@ -50,3 +50,10 @@ unique(foiMain[foiMain$min_bonferroni_P<0.05,'Symbol'])
 
 save(foiMain, file='rdas/diffential_expression_statistics_for_DMP_Genes.rda')
 write.csv(foiMain,file='csvs/SupplementalTable_diffential_expression_statistics_for_DMP_Genes.csv',row.names=FALSE)
+
+foiMainSig = foiMain[foiMain$minExprs_pvalue<0.05 & !duplicated(foiMain$Symbol),]
+
+res = sapply(paste0(foiMainSig$region_minP,"_log2FC"), function(x) {foiMainSig[,x]} )
+res = diag(res)
+
+apply(foiMain,1,function(x) x[paste0(foiMain$region_minP,"_log2FC")])

@@ -259,35 +259,4 @@ print(a)
 }
 dev.off()
 
-
-######### OLD
-##### DLPFC Boxplots ####
-#mergedStats = mergedStats[order(mergedStats$`DLPFC_subset_P.Value`),]
-#DLPFC_sigCpG = mergedStats[mergedStats$DLPFC_subset_adj.P.Val<0.1,'Name']
-#
-#### Create boxplots
-#pdf('/dcl01/lieber/ajaffe/Steve/Alz/plots/best_DLPFC_subset_DMC_boxplots.pdf',height=11,width=8.5)
-#for (cpg_i in DLPFC_sigCpG) {
-#
-#dat = cbind(pd,t(bVals[cpg_i,, drop=FALSE])  )
-#
-##Change column name for ggplot2 to work
-#ii=match(cpg_i, mergedStats$Name)
-#fixName= paste(unique(unlist(strsplit(mergedStats[ii,'UCSC_RefGene_Name'], ";"))), collapse = ", " )
-#custom_title = paste0(cpg_i, 
-#"\n DLPFC p=",as.character(signif(mergedStats[ii,'DLPFC_subset_P.Value'],3)), 
-#"\n ",fixName ) #custom title
-#
-#a = ggplot(dat, aes_string(x = 'Region', y = cpg_i, fill='Dx')) +
-#        geom_boxplot(outlier.colour = NA, alpha = 0.1, col='black')  + 
-#		geom_point(aes(col=`Dx`),position = position_jitterdodge(jitter.width=0.3,dodge.width=.85)) + 
-#		labs(y=paste0(cpg_i, "% Methylation (beta)"), title = custom_title) + 
-##		scale_colour_brewer(palette = "Set1") +
-##		scale_fill_brewer(palette = "Set1") + 
-#		scale_fill_manual(values=c("black","steelblue","#ab1323" ) ) + 
-#		scale_colour_manual(values=c("black","steelblue","#ab1323" ) ) + 
-#		theme(legend.position='bottom') 
-#	
-#print(a)			
-#}
-#dev.off()
+#unlist(strsplit(allStats[allStats,'within10kb_geneSymbol_gencode_hg38'], ";"))

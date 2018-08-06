@@ -190,10 +190,11 @@ main_sigCpG=main_sigCpG[1:(min(length(main_sigCpG),100))]
 subsetIndex=which(pd$keepList)
 
 mod <- model.matrix(~Dx+ Region+negControl_PC1 + negControl_PC2 + Age+Sex + snpPC1 , data = pd[subsetIndex,])
+#dat = cbind(pd[subsetIndex,],
+#			t( jaffelab::cleaningY(bVals[main_sigCpG, subsetIndex],mod=mod,P=5  ) ) )
 dat = cbind(pd[subsetIndex,],
-			t( jaffelab::cleaningY(bVals[main_sigCpG, subsetIndex],mod=mod,P=5  ) ) )
-			
-### Create boxplots
+			t( ilogit2(jaffelab::cleaningY(logit2(bVals[main_sigCpG, subsetIndex]),mod=mod,P=5  ) ) ) )
+			### Create boxplots
 pdf('plots/best_mainEffect_subset_DMC_boxplots_regionEffectLeftIn.pdf',height=10,width=12)
 for (cpg_i in main_sigCpG) {
 
@@ -210,7 +211,7 @@ custom_title = paste0( fixName ) #custom title
 a = ggplot(dat, aes_string(x = 'Region', y = cpg_i, fill='Dx')) +
         geom_boxplot(outlier.colour = NA, alpha = 0.1, col='black')  + 
 		geom_point(aes(col=`Dx`),position = position_jitterdodge(jitter.width=0.3,dodge.width=.85)) + 
-		labs(y=paste0(cpg_i, "\nDNAm level"),x='Diagnosis', title = custom_title) + 
+		labs(y=paste0(cpg_i, "\n Adjusted DNAm"),x='Diagnosis', title = custom_title) + 
 #		scale_colour_brewer(palette = "Set1") +
 #		scale_fill_brewer(palette = "Set1") + 
 		scale_fill_manual(values=c("black","#ab1323" ) ) + 

@@ -74,22 +74,21 @@ main_sigCpG = allStats[allStats$`Primary_subset_mainEffect_adj.P.Val`<0.05,'Name
 subsetIndex=which(pd$keepList)
 
 mod <- model.matrix(~Dx+ Region+negControl_PC1 + negControl_PC2 + Age+Sex + snpPC1 , data = pd[subsetIndex,])
-clean_dat=	t( jaffelab::cleaningY(bVals[main_sigCpG, subsetIndex],mod=mod,P=5  ) ) 
+clean_dat = t( ilogit2(jaffelab::cleaningY(logit2(bVals[main_sigCpG, subsetIndex]),mod=mod,P=5  ) ) ) 
 			
 ##########		
 pd_subset = pd[subsetIndex,]
-annotation <- data.frame( Dx = pd_subset$Dx )
-#						  Region = pd_subset$Region,
-#						  Race = pd_subset$Race,
-#						  Sex = pd_subset$Sex,
-#						  stringsAsFactors=T)
+annotation <- data.frame( Dx = pd_subset$Dx,
+						  Region = pd_subset$Region,
+						  stringsAsFactors=T)
 rownames(annotation) <- pd_subset$Sample_Name
 library(RColorBrewer)
-ann_colors = list(Dx = c("black","#ab1323" ) )
-#				  Region = brewer.pal(8,"Set1")[3:6],
+ann_colors = list(Dx = c("black","#ab1323" ),
+				  Region = brewer.pal(8,"Set1")[3:6])
 #				  Race= brewer.pal(8,"Dark2")[1:2],
 #				  Sex= c('black','grey') )
 names(ann_colors[['Dx']])<- levels(annotation$Dx)
+names(ann_colors[['Region']])<- levels(annotation$Region)
 
 col_scaled_clean_dat = apply(clean_dat, 2, scale)
 rownames(col_scaled_clean_dat) <- rownames(clean_dat)
@@ -100,11 +99,7 @@ col_scaled_clean_dat[col_scaled_clean_dat> 2.5] = 2.5
 
 breaksList = seq(-2.5, 2.5, length.out =100)
 
-sort_hclust <- function(...) as.hclust(dendsort::dendsort(as.dendrogram(...)))
-mat_cluster_cols <- hclust(as.dist( col_scaled_clean_dat ) )
-mat_cluster_cols <- sort_hclust(mat_cluster_cols)
-
-pdf('plots/regionEffectLeftIn_Figure_clustered_cleaned_bVals_mainEffect_CpGs_FDR05_subsetModel.pdf',height=20,width=22,onefile=F,useDingbats=FALSE)
+pdf('plots/regionEffectLeftIn_Figure_clustered_cleaned_bVals_mainEffect_CpGs_FDR05_subsetModel.pdf',height=20,width=26,onefile=F,useDingbats=FALSE)
 pheatmap::pheatmap(col_scaled_clean_dat,
 				   breaks = breaksList,
 				   clustering_distance_cols = "euclidean",

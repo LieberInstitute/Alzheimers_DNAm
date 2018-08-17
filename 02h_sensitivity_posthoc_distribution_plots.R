@@ -14,6 +14,24 @@ chisq.test ( table(allRegion_mergedStats$Relation_to_Island, allRegion_mergedSta
 chisq.test (table(allRegion_mergedStats$Relation_to_Island, allRegion_mergedStats$ALL_subset_mainEffect_logFC > 0 & allRegion_mergedStats$ALL_subset_mainEffect_adj.P.Val <0.05) )
 chisq.test (table(allRegion_mergedStats$Relation_to_Island, allRegion_mergedStats$ALL_subset_mainEffect_adj.P.Val <0.05) )
 
+## Run posthocs for unsplit
+fisher.test (table(allRegion_mergedStats$Relation_to_Island=="Island", allRegion_mergedStats$ALL_subset_mainEffect_adj.P.Val <0.05) )
+fisher.test (table(allRegion_mergedStats$Relation_to_Island=="Shore", allRegion_mergedStats$ALL_subset_mainEffect_adj.P.Val <0.05) )
+fisher.test (table(allRegion_mergedStats$Relation_to_Island=="Shelf", allRegion_mergedStats$ALL_subset_mainEffect_adj.P.Val <0.05) )
+fisher.test (table(allRegion_mergedStats$Relation_to_Island=="OpenSea", allRegion_mergedStats$ALL_subset_mainEffect_adj.P.Val <0.05) )
+
+## Run posthocs for hyper
+fisher.test (table(allRegion_mergedStats$Relation_to_Island=="Island", allRegion_mergedStats$ALL_subset_mainEffect_logFC > 0 & allRegion_mergedStats$ALL_subset_mainEffect_adj.P.Val <0.05) )
+fisher.test (table(allRegion_mergedStats$Relation_to_Island=="OpenSea", allRegion_mergedStats$ALL_subset_mainEffect_logFC > 0 & allRegion_mergedStats$ALL_subset_mainEffect_adj.P.Val <0.05) )
+fisher.test (table(allRegion_mergedStats$Relation_to_Island=="Shelf", allRegion_mergedStats$ALL_subset_mainEffect_logFC > 0 & allRegion_mergedStats$ALL_subset_mainEffect_adj.P.Val <0.05) )
+fisher.test (table(allRegion_mergedStats$Relation_to_Island=="Shore", allRegion_mergedStats$ALL_subset_mainEffect_logFC > 0 & allRegion_mergedStats$ALL_subset_mainEffect_adj.P.Val <0.05) )
+
+## Run posthocs for hypo
+fisher.test (table(allRegion_mergedStats$Relation_to_Island=="Island", allRegion_mergedStats$ALL_subset_mainEffect_logFC < 0 & allRegion_mergedStats$ALL_subset_mainEffect_adj.P.Val <0.05) )
+fisher.test (table(allRegion_mergedStats$Relation_to_Island=="OpenSea", allRegion_mergedStats$ALL_subset_mainEffect_logFC < 0 & allRegion_mergedStats$ALL_subset_mainEffect_adj.P.Val <0.05) )
+fisher.test (table(allRegion_mergedStats$Relation_to_Island=="Shelf", allRegion_mergedStats$ALL_subset_mainEffect_logFC < 0 & allRegion_mergedStats$ALL_subset_mainEffect_adj.P.Val <0.05) )
+fisher.test (table(allRegion_mergedStats$Relation_to_Island=="Shore", allRegion_mergedStats$ALL_subset_mainEffect_logFC < 0 & allRegion_mergedStats$ALL_subset_mainEffect_adj.P.Val <0.05) )
+
 #Make plot
 load('rdas/tidyStats_caseControl_DMC_allRegion.rda')
 dat_sig = allRegion_tidyStats[allRegion_tidyStats$Interaction=="mainEffect" & allRegion_tidyStats$CellTypeAdjustment=="Primary" &allRegion_tidyStats$Model=="subset_mainEffect", ]

@@ -68,4 +68,21 @@ fisher.test(table(AD=allRegion_mergedStats[,'ALL_subset_mainEffect_adj.P.Val']<0
 
 tab = table(allRegion_mergedStats[,'ALL_subset_mainEffect_P.Value']<1e-3,Aging_controlOnly_mergedStats[rownames(allRegion_mergedStats),"ALL_Control_Aging_adj.P.Val"]<1e-3 & sign(Aging_controlOnly_mergedStats[rownames(allRegion_mergedStats),"ALL_Control_Aging_logFC"]) == sign(allRegion_mergedStats[,'ALL_subset_mainEffect_logFC']))
 fisher.test(tab)
-	
+
+#
+sigDMPs = rownames(allRegion_mergedStats[allRegion_mergedStats[,'ALL_subset_mainEffect_adj.P.Val']<0.05,])
+
+down_sig = sum( allRegion_mergedStats[sigDMPs,'ALL_subset_mainEffect_logFC']<0 & (Aging_controlOnly_mergedStats[sigDMPs,"ALL_Control_Aging_logFC"]<0 & Aging_controlOnly_mergedStats[sigDMPs,"ALL_Control_Aging_P.Value"]<=1e-3 ) )	
+up_sig = sum(allRegion_mergedStats[sigDMPs,'ALL_subset_mainEffect_logFC']>0 & (Aging_controlOnly_mergedStats[sigDMPs,"ALL_Control_Aging_logFC"]>0 & Aging_controlOnly_mergedStats[sigDMPs,"ALL_Control_Aging_P.Value"]<=1e-3 ) 	)
+down_notSig = sum(allRegion_mergedStats[sigDMPs,'ALL_subset_mainEffect_logFC']<0 & (Aging_controlOnly_mergedStats[sigDMPs,"ALL_Control_Aging_logFC"]<0 & Aging_controlOnly_mergedStats[sigDMPs,"ALL_Control_Aging_P.Value"]>1e-3 ) )	
+up_notSig =  sum(allRegion_mergedStats[sigDMPs,'ALL_subset_mainEffect_logFC']>0 & (Aging_controlOnly_mergedStats[sigDMPs,"ALL_Control_Aging_logFC"]>0 & Aging_controlOnly_mergedStats[sigDMPs,"ALL_Control_Aging_P.Value"]>1e-3 ) )
+
+mat = matrix(c(down_notSig,down_sig,up_notSig,up_sig),nrow=2,ncol=2)
+mat
+fisher.test(mat)
+##
+
+
+fisher.test(table(AD_down=allRegion_mergedStats[sigDMPs,'ALL_subset_mainEffect_logFC']<0, 
+	 aging_down=Aging_controlOnly_mergedStats[sigDMPs,"ALL_Control_Aging_logFC"]<0))	 
+

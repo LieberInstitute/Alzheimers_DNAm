@@ -7,10 +7,10 @@ Coming soon
 
 #### Importing idats, preprocessing, and exploratory data analysis
 * *00_load_idats.R*: Import idat files into minfi (an RGset).
-* *01a_preprocess_methylation.R: Preprocess methylation array data (drop low-quality samples and probes, check QC).
+* *01a_preprocess_methylation.R*: Preprocess methylation array data (drop low-quality samples and probes, check QC).
 * *01b_check_genotype_correlation_meth450k_vs_SNPChip.R*: Check correlation between SNP-chip and methylation array genotypes (~65 probes).
 * *01c_check_negative_control_PCs.R*: Inspect principal component analysis of negative control probes.
-* *01d_pca.R&: Principal component analysis of probes used in analysis.
+* *01d_pca.R*: Principal component analysis of probes used in analysis.
 * *01e_subset_to_samples_for_analysis.R*: Removal of samples not used in analysis.
 * *01f_pull_genotypes.R*: [Not used in paper].
 * *01g_create_demographic_table.R*: Create a demographic table (Supplemental Table 1).
@@ -31,27 +31,27 @@ Coming soon
 * *02h_sensitivity_posthoc_distribution_plots.R*: Posthoc distribution sensitivity plots.
 
 #### Region-level analyses, results summary, and visualizations
-* 03a_caseControl_DMR_analysis.R
-* 03b_caseControl_DMR_plots.R
-* 03c_caseControl_DMR_analysis_NeuN_sensitivity.R
+* *03a_caseControl_DMR_analysis.R*: Run DNAm region-level case-control analysis.
+* *03b_caseControl_DMR_plots.R*: Plot significant differentially methylated regions.
+* *03c_caseControl_DMR_analysis_NeuN_sensitivity.R*: Run DMR case-control analysis with NeuN estimates adjustment.
 
 #### Integrating gene-expression data and asessing replicability
-* 04a_comparing_global_alz_DMP_stats_across_datasets.R
-* 04b_check_case_control_stats_for_DMP_genes.R
-* 04c_correlate_DNAm_with_gene_expression.R
-* 04d_replicability_of_top_DMPs.R
+* *04a_comparing_global_alz_DMP_stats_across_datasets.R*: Check correlation between statistics across datasets.
+* *04b_check_case_control_stats_for_DMP_genes.R*: Pull differential gene expression results for case-control analysis.
+* *04c_correlate_DNAm_with_gene_expression.R*: Correlate DNAm with gene expression of nearby genes (within 10kb either side).
+* *04d_replicability_of_top_DMPs.R*: Check if top DMPs are present in Lunnon et al. 2014.
 
 #### Checking involvement of aging
-* 05a_aging_control_AD_Int.R
-* 05c_aging_results_analysis.R
+* *05a_aging_control_AD_Int.R*
+* *05c_aging_results_analysis.R*
 
 #### Functional and system-level analyses
-* 06a_genetic_risk_loci_DMP_results.R
-* get_cpg_in_risk_loci.R
-* scrape_nature_genetics_lambert_et_al.R
-* 06b_string_ppi_networks.R
-* 06c_check_coexpression_networks.R
+* *06a_genetic_risk_loci_DMP_results.R*
+* *get_cpg_in_risk_loci.R*
+* *scrape_nature_genetics_lambert_et_al.R*
+* *06b_string_ppi_networks.R*
+* *06c_check_coexpression_networks.R*
 
 #### Reprocessing data from Lunnon et al. (2014).
-* Lunnon_2014_getGEO_01.R
-* Lunnon_2014_DMP_02.R
+* *Lunnon_2014_getGEO_01.R*: Download Lunnon et al data.
+* *Lunnon_2014_DMP_02.R*: Model case-control differences.

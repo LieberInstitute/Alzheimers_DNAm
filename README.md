@@ -42,15 +42,15 @@ Coming soon
 * *04d_replicability_of_top_DMPs.R*: Check if top DMPs are present in Lunnon et al. 2014.
 
 #### Checking involvement of aging
-* *05a_aging_control_AD_Int.R*
-* *05c_aging_results_analysis.R*
+* *05a_aging_control_AD_Int.R*: Not included in paper.
+* *05c_aging_results_analysis.R*: Comparing "normal" (unaffected-control) aging  DNAm changes to AD-associated DNAm changes.
 
 #### Functional and system-level analyses
-* *06a_genetic_risk_loci_DMP_results.R*
-* *get_cpg_in_risk_loci.R*
-* *scrape_nature_genetics_lambert_et_al.R*
-* *06b_string_ppi_networks.R*
-* *06c_check_coexpression_networks.R*
+* *06a_genetic_risk_loci_DMP_results.R*: Assess enrichment of DMPs in GWAS loci.
+* *get_cpg_in_risk_loci.R*: Determine which CpG probes lie within GWAS risk loci.
+* *scrape_nature_genetics_lambert_et_al.R*: Pull index SNP from 2014 AD-GWAS (Lambert et al.) to determine AD risk loci. 
+* *06b_string_ppi_networks.R*: Not included in paper.
+* *06c_check_coexpression_networks.R*: Not included in paper.
 
 #### Reprocessing data from Lunnon et al. (2014).
 * *Lunnon_2014_getGEO_01.R*: Download Lunnon et al data.

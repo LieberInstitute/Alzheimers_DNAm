@@ -139,12 +139,28 @@ GGally::ggscatmat(dat, columns = 1:4 )
 dev.off()
 
 ## Main
-dat = regionSpecific_mergedStats[allRegion_mergedStats[allRegion_mergedStats$Primary_subset_mainEffect_adj.P.Val<0.05,'Name'],c('CRB_subset_NoAdj_logFC','DLPFC_subset_NoAdj_logFC','HIPPO_subset_NoAdj_logFC','ERC_subset_NoAdj_logFC') ]
+dat = regionSpecific_mergedStats[allRegion_mergedStats[allRegion_mergedStats$ALL_subset_mainEffect_adj.P.Val<0.05,'Name'],c('CRB_subset_NoAdj_logFC','DLPFC_subset_NoAdj_logFC','HIPPO_subset_NoAdj_logFC','ERC_subset_NoAdj_logFC') ]
 colnames(dat) <- jaffelab::ss(colnames(dat),"_",1)
 pdf('plots/SupplementalFigure_GGally_pairwise_scatter_crossRegion_DMPs_4brainRegions.pdf',height=10,width=10,useDingbats=FALSE)
 GGally::ggscatmat(dat, columns = 1:4 )
 dev.off()
 
+library(tidyr)
+dat = regionSpecific_mergedStats[allRegion_mergedStats[allRegion_mergedStats$ALL_subset_mainEffect_adj.P.Val<0.05,'Name'],c('CRB_subset_NoAdj_t','DLPFC_subset_NoAdj_t','HIPPO_subset_NoAdj_t','ERC_subset_NoAdj_t') ]
+colnames(dat) <- jaffelab::ss(colnames(dat),"_",1)
+dat=cbind(crossRegion=allRegion_mergedStats[allRegion_mergedStats[allRegion_mergedStats$ALL_subset_mainEffect_adj.P.Val<0.05,'Name'],'ALL_subset_mainEffect_t'],dat)
+dat=dat[order(dat$crossRegion),]
+
+dat$CpG=1:nrow(dat)
+
+dat2=gather(dat,Model,T_Statistic,-CpG)
+dat2$Model=factor(dat2$Model,levels=c('crossRegion','DLPFC','ERC','HIPPO','CRB') )
+options(bitmapType="cairo")
+pdf('plots/SupplementalFigure_Loadings_of_CrossRegion_Hits.pdf',height=10,width=10,useDingbats=FALSE)
+ggplot(dat2,aes(x=CpG,y=T_Statistic)) + geom_point()+facet_wrap(~Model,ncol=1) + 
+geom_smooth(data=dat2[dat2$CpG%in%dat2[dat2$Model=="crossRegion"&dat2$T_Statistic>0,'CpG'],], col='steelblue') +
+geom_smooth(data=dat2[dat2$CpG%in%dat2[dat2$Model=="crossRegion"&dat2$T_Statistic<0,'CpG'],], col='steelblue') 
+dev.off()
 ##############	 
 	 
 #Histogram for effect size 

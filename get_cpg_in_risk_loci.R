@@ -40,7 +40,7 @@ library(GenomicRanges)
 risk_loci_grl = makeGRangesFromDataFrame(ad_ld_friends, start.field='SNP2.Pos',end.field='SNP2.Pos',seqnames.field='SNP2.Chr', keep.extra.columns=T )
 risk_loci_grl = split(risk_loci_grl, as.factor(risk_loci_grl$SNP1.Name))
 risk_loci_grl = lapply(risk_loci_grl, range )
-risk_loci_gr =  do.call(getMethod(c, "GenomicRanges"),risk_loci_grl)
+risk_loci_gr =  unlist(as(risk_loci_grl, "GRangesList") ) #do.call(getMethod(c, "GenomicRanges"),risk_loci_grl)
 names(risk_loci_gr) <- names(risk_loci_grl)
 risk_loci_gr$coordinates=paste0(as.character(seqnames(risk_loci_gr)),":",start(risk_loci_gr),"-",end(risk_loci_gr) )
 
@@ -67,5 +67,6 @@ kk = match(ad_genetic_risk_loci$indexSnp_rsNum, risk_loci_list$SNP)
 ad_genetic_risk_loci$indexSnp_Chr_hg19 = risk_loci_list$Chr[kk]
 ad_genetic_risk_loci$indexSnp_Pos_hg19 = risk_loci_list$Position[kk]
 ad_genetic_risk_loci$indexSnp_nearestGene = risk_loci_list$Closest.gene[kk]
+dim(ad_genetic_risk_loci)
 
 write.csv(ad_genetic_risk_loci,file='/dcl01/lieber/ajaffe/Steve/Alz/ad_genetic_risk_LD_block_loci_cpgs.csv',row.names=F)

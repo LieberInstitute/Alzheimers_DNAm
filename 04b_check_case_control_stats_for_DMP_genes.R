@@ -44,9 +44,12 @@ foiMain$region_minP = sapply(foiMain$region_minP, function(x) c("DLPFC", "ERC", 
 
 foiMain$min_bonferroni_P =  sapply(foiMain$minExprs_pvalue,p.adjust,method='bonf',n=length(unique(foiMain$Gene)) )
 
+foiMain[sapply(foiMain$minExprs_pvalue,p.adjust,method='bonf',n=length(unique(foiMain$Gene))*4 )<0.05,]
+
+
 table(foiMain$minExprs_pvalue[!duplicated(foiMain$Gene)]<0.05)
 table(foiMain$min_bonferroni_P[!duplicated(foiMain$Gene)]<0.05)
-unique(foiMain[foiMain$min_bonferroni_P<0.05,'Symbol'])
+unique(foiMain[foiMain$min_bonferroni_P<0.05,c('Symbol','gencodeID')] )
 
 save(foiMain, file='rdas/diffential_expression_statistics_for_DMP_Genes.rda')
 write.csv(foiMain,file='csvs/SupplementalTable_diffential_expression_statistics_for_DMP_Genes.csv',row.names=FALSE)

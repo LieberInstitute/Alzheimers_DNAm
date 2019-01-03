@@ -61,6 +61,15 @@ k=min( grep("P$", colnames(Lunnon_CRB_DMPs)) ):ncol(Lunnon_CRB_DMPs)
 colnames(Lunnon_CRB_DMPs)[k] <- paste0( prefixes,"_",colnames(Lunnon_CRB_DMPs)[k])
 Lunnon_CRB_DMPs[,k]=sapply(Lunnon_CRB_DMPs[,k],as.numeric)
 
+#### Cross-region #####
+Lunnon_crossCortex_DMPs= openxlsx::read.xlsx('/dcl01/lieber/ajaffe/Steve/Alz/nn.3782-S8.xlsx',startRow=2)
+column_names = Lunnon_crossCortex_DMPs[1,]
+Lunnon_crossCortex_DMPs =Lunnon_crossCortex_DMPs[-1,]
+colnames(Lunnon_crossCortex_DMPs) <- column_names
+colnames(Lunnon_crossCortex_DMPs) = gsub("P value ","P", colnames(Lunnon_crossCortex_DMPs))
+Lunnon_crossCortex_DMPs = Lunnon_crossCortex_DMPs[,1:7] #drop cols we don't care about
+Lunnon_crossCortex_DMPs[,6:7]=sapply(Lunnon_crossCortex_DMPs[,6:7],as.numeric)
+colnames(Lunnon_crossCortex_DMPs)[6:7] <- c('Fisher P', 'Brown P')
 ##### Replication stats by all region		
 load('rdas/tidyStats_caseControl_DMC_allRegion.rda')
 
@@ -221,3 +230,30 @@ singleRegion_DMP_Replication=group_by(singleRegion_tidyStats,Region, Model, Cell
 												 replication_p=P.Value,
 												 replication_effect_size=logFC)[2]) %>% as.data.frame()
 write.csv(singleRegion_DMP_Replication, 'csvs/SupplementalTable_singleRegion_DMP_Results_Replication.csv',row.names=F)
+
+################ Making venn diagram at CpG level
+load('rdas/allRegion_mergedStats_DMP_analysis_dupCor.rda')
+ourSigCpG = allRegion_mergedStats[allRegion_mergedStats[,'ALL_subset_mainEffect_adj.P.Val']<0.05,'Name']
+LunnonCrossCortextCpG = Lunnon_crossCortex_DMPs[,'Probe']
+JagerCpG = Jager_S2[,'Target ID']
+
+shared = Reduce(intersect, TopHits)
+allRegion_mergedStats[shared,c('Name','within10kb_geneSymbol_gencode_hg38.1','ALL_subset_mainEffect_P.Value')]
+a
+TopHits = list(LIBD=ourSigCpG, Lunnon_et_al=LunnonCrossCortextCpG, DeJager_et_al=JagerCpG)
+####
+setwd('/dcl01/lieber/ajaffe/Steve/Alz/Paper')
+library(VennDiagram)
+## sig
+venn_overlap_cpgs = venn.diagram(x = TopHits,
+							category.names = c('LIBD','Lunnon et al', 'De Jager et al'),
+							filename = NULL,
+							fill = c('red', 'blue','green'),
+							#cat.just=list(c(0.9,1.5) , c(-0.8,5) ), 
+							cex=5, cat.cex=2
+							)							
+grid.draw(venn_overlap_cpgs)
+
+pdf(file='plots/SupplementalFigure_overlap_between_reported_CpGs.pdf',height=12,width=12)
+    grid.draw(venn_overlap_cpgs)
+dev.off()

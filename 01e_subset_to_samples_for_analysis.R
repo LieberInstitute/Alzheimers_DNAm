@@ -75,5 +75,23 @@ pd[!pd$keepList,'DxOrdinal'] <- 'Alz Drop'
 pd[pd$DxOrdinal=="Alzheimer",'DxOrdinal'] <- 'Alz Keep'
 
 ### Save out final sample set used for meQTL analysis
+#Load in pheno data from Rahul 9/12/2018
+updated_keep_list = openxlsx::read.xlsx('/dcl01/ajaffe/data/lab/libd_alzheimers/grant_analysis/NIMH and LIBD IDs for AD CASES.xlsx',start=2)
+updated_keep_list$BrNumerical = as.numeric( gsub("BR","",updated_keep_list$LBR.Brain.ID) )
+###
+dat = cbind(pd, updated_keep_list[match( as.numeric (gsub("Br","",pd$BrNum )), updated_keep_list$BrNumerical  ),] ) 
+oldbrnums = read.csv('/users/ajaffe/Lieber/Projects/450k/alz/pheno_info_from_straub.csv')
+dat = cbind(dat, Old_BrNum = oldbrnums[match( as.numeric (gsub("Br","",pd$BrNum )), oldbrnums$BrNum),'OLD_BrNUM'] )
+table(dat$DxOrdinal, dat$AD.RATING)
+
+##
+info_out = dat[!duplicated(dat[,c('BrNum','DxOrdinal')]),c('BrNum','Old_BrNum','Brain.ID','AD.RATING','Dx','DxOrdinal')]
+info_out$INCORRECTLY_USED_IN_ORDINAL_MODEL = ifelse(!is.na(info_out$`AD.RATING`) & info_out$DxOrdinal=='Alz Drop', 'Yes','No')
+write.csv(info_out, file='/dcl01/lieber/ajaffe/Steve/Alz/checking_ordinal_model.csv', row.names=F)
+
+BrNums= dat[!(as.numeric (gsub("Br","",dat$BrNum ) )%in%updated_keep_list$BrNumerical | dat$DxOrdinal=="Control"),c('BrNum','Brain.ID')]
+BrNums=data.frame(BrNum=unique(BrNums))
+write.csv(BrNums,file='/dcl01/lieber/ajaffe/Steve/Alz/BrNums_for_Intermediate_Group.csv')
+###
 save(pd,bVals,mVals,file='rdas/cleanSamples_n377_processed_data_postfiltered.rda')
 save(pd,Mset_SQN,file='rdas/cleanSamples_n377_Mset_SQN_postfiltered.rda')

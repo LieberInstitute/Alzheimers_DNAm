@@ -44,6 +44,9 @@ pd_rna = pd_rna[!pd_rna$SAMPLE_ID %in% dropBrains, ]
 pd_rna= pd_rna[match(pd_meth$matchBrain,pd_rna$matchBrain), ] 
 geneRpkm = geneRpkm[results$gencodeID,pd_rna$SAMPLE_ID]
 
+# length(unique(pd[pd$Dx=="NC",'BRNum'])) # number of unique control donors
+# length(unique(pd[pd$Dx=="AD",'BRNum'])) # number of unique AD donors
+
 ###### Run analysis #######
 load('rdas/caseControl_DMC_allRegion.rda')
 
@@ -128,6 +131,9 @@ full_res_ss$min_Bonf = sapply(full_res_ss$minCorrelation_pvalue,p.adjust,method=
 write.csv(full_res_ss, file='csvs/SupplementalTable_top_DMP_methylation_versus_corresponding_gene_expression_nomDE_with_nomAssoc_mainEffect.csv',row.names=F)			 
 
 full_res_ss = read.csv('csvs/SupplementalTable_top_DMP_methylation_versus_corresponding_gene_expression_nomDE_with_nomAssoc_mainEffect.csv')
+lunnon_et_al = read.csv('csvs/SupplementalTable_dmp_replicated_nomSig_dirConsistent_in_lunnon2014.csv')
+full_res_ss$Lunnon_Replicated = ifelse(full_res_ss$Coefficient%in%as.character(lunnon_et_al[,"Name"]), TRUE,FALSE)
+full_res_ss[full_res_ss$Lunnon_Replicated,]%>%head
 
 x=table(table(full_res$CpG))		
 y=table(table(full_res_ss$CpG))

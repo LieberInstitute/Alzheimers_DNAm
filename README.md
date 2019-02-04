@@ -1,9 +1,9 @@
-Code used to generate results for the paper: *Integrated DNA methylation and gene expression profiling across multiple brain regions implicate novel genes in Alzheimer’s disease*
+Code used to generate results for the paper: *Integrated DNA methylation and gene expression profiling across multiple brain regions implicate novel genes in Alzheimer's disease*
 
 ## Citation
-Semick SA, Bharadwaj RA, Collado-Torres L, Tao R, Shin JH, Deep-Soboslay A, Weiss J, Weinberger DR, Hyde TM, Kleinman JE, Jaffe AE. Integrated DNA methylation and gene expression profiling across multiple brain regions implicate novel genes in Alzheimer's disease. bioRxiv DOI 10.1101/430603. 2018.
+Semick SA, Bharadwaj RA, Collado-Torres L, Tao R, Shin JH, Deep-Soboslay A, Weiss JR, Weinberger DR, Hyde TM, Kleinman JE, Jaffe AE, Mattay VS. Integrated DNA methylation and gene expression profiling across multiple brain regions implicate novel genes in Alzheimer's disease. 2019 Feb 2. PMID: 30712078 
 
-Pre-print URL: https://www.biorxiv.org/content/early/2018/09/29/430603.
+URL: https://link.springer.com/article/10.1007%2Fs00401-019-01966-5
 
 
 ## Script summary
